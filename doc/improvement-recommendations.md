@@ -15,7 +15,7 @@ without re-exploration.
 bumps, but:
 
 - **No paper trail.** JSON forbids comments, so document the reason for each
-  override in `CLAUDE.md` → "Compliance carve-outs" (or a new
+  override in `AGENTS.md` → "Compliance carve-outs" (or a new
   `package-overrides.md` note). Today there's no indication *why* three is pinned
   to a 2021 release or lodash to 4.18.
 - **Use tilde or exact pins for forced overrides.** `^4.18.0` allows minor drift
@@ -41,7 +41,7 @@ Node 25 passes `engines` and fails in CI anyway. Tighten to `">=24 <25"` and:
 `OpenLyceum/Baton/.github/workflows/*@main`. Every sim using this template is
 exposed to a compromised Baton commit. Pin to a SHA (or a `@v1` tag) for the
 template — it's the one repo forks will copy. At minimum, document the trade-off
-in `CLAUDE.md`.
+in `AGENTS.md`.
 
 ### 4. `rename-sim.ts` replacement table is order-fragile
 
@@ -85,7 +85,7 @@ JSON through a `satisfies` shape) so a key rename surfaces as a type error.
 
 ### 8. No dispose-pattern reference in `SimulationScreenView`
 
-`src/simulation/view/SimulationScreenView.ts` is billed (in `CLAUDE.md`) as the
+`src/simulation/view/SimulationScreenView.ts` is billed (in `AGENTS.md`) as the
 "canonical accessibility reference," and its header comment instructs forks to
 turn `currentDetailsContent` into a live `DerivedProperty` — with no example of
 unlinking it. Ship a commented `public override dispose()` stub demonstrating
@@ -129,7 +129,7 @@ portrait-friendly. Consider leaving it out of the template.
 
 `package.json` `release` = `check && lint && build && version patch && push`. For
 a template that ships a sample test suite, this is fine, but add a docblock note
-in the script table (`README.md` / `CLAUDE.md`) saying "intentional — template
+in the script table (`README.md` / `AGENTS.md`) saying "intentional — template
 tests are samples; real sims should append `&& npm test`."
 
 ## Docs / polish
