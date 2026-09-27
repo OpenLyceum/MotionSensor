@@ -86,8 +86,8 @@ configuration opcodes are not part of the wire protocol this sim speaks.
 | Vite | ^8 | Build tool and dev server |
 | TypeScript | ^7 | `erasableSyntaxOnly` — no `enum`, no `namespace` |
 | Biome | ^2.5 | Lint + format |
-| Vitest | ^4 | Unit tests (`happy-dom`) |
-| Playwright | ^1.62 | Fuzz smoke test |
+| Vitest | ^5 | Unit tests (`happy-dom`) |
+| Playwright | ^1.63 | Fuzz smoke test |
 | vite-plugin-pwa | ^1 | Installable / offline |
 
 Hardware: **PASCO Wireless Motion Sensor PS-3219** (0.15–4 m, 1 mm resolution,
