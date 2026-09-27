@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "Record position over time with the mouse or a PASCO Wireless Motion Sensor over Web Bluetooth, and plot position, velocity and acceleration on a graph whose axes you choose.",
+  "description": "Record motion with the mouse or a PASCO motion sensor, and graph position, velocity and acceleration.",
   "license": "AGPL-3.0-or-later",
   "repository": {
     "type": "git",
