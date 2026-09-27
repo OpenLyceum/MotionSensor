@@ -34,7 +34,7 @@ export interface GridVisualizationConfig {
   yTickLabelSet: TickLabelSet;
 }
 
-export default class GraphDataManager {
+export class GraphDataManager {
   private readonly dataPoints: Vector2[] = [];
   private readonly maxDataPoints: number;
   private readonly chartTransform: ChartTransform;

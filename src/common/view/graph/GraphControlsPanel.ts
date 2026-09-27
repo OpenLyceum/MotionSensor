@@ -33,7 +33,7 @@ const HEADER_CORNER_RADIUS = 5;
 const HEADER_LINE_WIDTH = 2;
 const HEADER_DARKEN_FACTOR = 0.1;
 
-export default class GraphControlsPanel {
+export class GraphControlsPanel {
   private readonly availableProperties: PlottableProperty[];
   private readonly xPropertyProperty: Property<PlottableProperty>;
   private readonly yPropertyProperty: Property<PlottableProperty>;

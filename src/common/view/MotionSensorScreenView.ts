@@ -40,7 +40,7 @@ import { GRAPH_HEIGHT, GRAPH_WIDTH, MAX_GRAPH_DATA_POINTS, SCREEN_VIEW_MARGIN } 
 import type { MotionSensorModel } from "../model/MotionSensorModel.js";
 import type { SensorPositionSource } from "../model/SensorPositionSource.js";
 import { DataTableNode } from "./DataTableNode.js";
-import ConfigurableGraph from "./graph/ConfigurableGraph.js";
+import { ConfigurableGraph } from "./graph/ConfigurableGraph.js";
 import type { PlottableProperty } from "./graph/PlottableProperty.js";
 import { PlayAreaNode } from "./PlayAreaNode.js";
 import { RecordControl } from "./RecordControl.js";

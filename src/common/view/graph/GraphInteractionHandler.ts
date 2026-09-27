@@ -25,7 +25,7 @@ import {
 } from "scenerystack/scenery";
 import MotionSensorColors from "../../../MotionSensorColors.js";
 import MotionSensorNamespace from "../../../MotionSensorNamespace.js";
-import type GraphDataManager from "./GraphDataManager.js";
+import type { GraphDataManager } from "./GraphDataManager.js";
 
 /**
  * Configuration for the chart and its data management
@@ -64,7 +64,7 @@ export interface GraphDimensions {
   height: number;
 }
 
-export default class GraphInteractionHandler {
+export class GraphInteractionHandler {
   private readonly chartTransform: ChartTransform;
   private readonly chartRectangle: ChartRectangle;
   private readonly dataManager: GraphDataManager;
