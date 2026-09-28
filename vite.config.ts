@@ -16,8 +16,9 @@ const securityHeaders: Record<string, string> = {
   "Cross-Origin-Embedder-Policy": "require-corp",
   "Content-Security-Policy": [
     "default-src 'self'",
-    // SceneryStack 3's query parsing and seedrandom dependency require dynamic
-    // evaluation. Keep this aligned with the shared SceneryStack template.
+    // TODO(scenerystack): drop 'unsafe-eval' when SceneryStack no longer needs
+    // Function/eval for query-parameter parsing — reopen a CSP audit then.
+    // 'unsafe-eval' is required for SceneryStack query parameter parsing
     "script-src 'self' 'unsafe-eval'",
     // Event-handler attributes are governed by script-src-attr, separately from
     // inline <script>. SceneryStack's ParallelDOM.pdomInputEnabledListener sets an
