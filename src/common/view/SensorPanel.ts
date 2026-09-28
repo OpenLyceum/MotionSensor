@@ -7,9 +7,15 @@
  * ── Two rules carried over from RadioactivityAndStatistics ────────────────────
  * 1. The status is a coloured dot **and** a text label. Colour alone never
  *    carries the meaning.
- * 2. When Web Bluetooth is unavailable there is **no** Connect button, rather
- *    than a disabled one — with a sentence saying why and what to do instead.
- *    A greyed-out button invites clicking and explains nothing.
+ * 2. When a transport is unavailable there is **no** Connect button for it,
+ *    rather than a disabled one — and when neither works, a sentence saying why
+ *    and what to do instead. A greyed-out button invites clicking and explains
+ *    nothing.
+ *
+ * ── One button per transport ──────────────────────────────────────────────────
+ * Bluetooth and USB reach the same sensor, and the browser demands a user
+ * gesture either way, so the choice is the click itself rather than a setting
+ * made beforehand. Each button is shown only where its API exists.
  */
 
 import type { TReadOnlyProperty } from "scenerystack/axon";
@@ -23,9 +29,13 @@ import type { SensorA11yStrings } from "../../i18n/StringManager.js";
 import { StringManager } from "../../i18n/StringManager.js";
 import MotionSensorColors from "../../MotionSensorColors.js";
 import { CONTROL_PANEL_WIDTH } from "../../MotionSensorConstants.js";
-import { BluetoothStatus, getBluetoothStatus } from "../model/bluetoothSupport.js";
 import { ConnectionState } from "../model/ConnectionState.js";
-import type { SensorPositionSource } from "../model/SensorPositionSource.js";
+import {
+  type SensorPositionSource,
+  SensorTransport,
+  type SensorTransportValue,
+} from "../model/SensorPositionSource.js";
+import { BluetoothStatus, getBluetoothStatus, isWebUsbAvailable } from "../model/transportSupport.js";
 
 const LABEL_FONT = new PhetFont(13);
 const MESSAGE_FONT = new PhetFont(12);
@@ -40,6 +50,10 @@ export type SensorPanelOptions = {
 export class SensorPanel extends MotionSensorPanel {
   /** Null when Web Bluetooth is unavailable, so there is nothing to focus. */
   public readonly connectButton: RectangularPushButton | null;
+
+  /** Null when WebUSB is unavailable. */
+  public readonly connectUsbButton: RectangularPushButton | null;
+
   public readonly disconnectButton: RectangularPushButton;
 
   private readonly disposeSensorPanel: () => void;
@@ -52,6 +66,7 @@ export class SensorPanel extends MotionSensorPanel {
 
     const status = getBluetoothStatus();
     const bluetoothAvailable = status === BluetoothStatus.AVAILABLE;
+    const usbAvailable = isWebUsbAvailable();
 
     const statusTextProperty = new DerivedProperty(
       [
@@ -110,22 +125,41 @@ export class SensorPanel extends MotionSensorPanel {
       (state) => state === ConnectionState.CONNECTED,
     );
 
+    const createConnectButton = (
+      transport: SensorTransportValue,
+      labelProperty: TReadOnlyProperty<string>,
+      accessibleNameProperty: TReadOnlyProperty<string>,
+    ) =>
+      new RectangularPushButton({
+        ...FLAT_PANEL_PUSH_BUTTON_OPTIONS,
+        content: new Text(labelProperty, {
+          font: LABEL_FONT,
+          fill: LIGHT_SURFACE_TEXT_FILL,
+        }),
+        // Deliberately not async: the browser must still see this call stack
+        // as part of the user gesture, and connect() reports failure through
+        // Properties rather than by rejecting.
+        listener: () => {
+          source.connect(transport).catch(() => undefined);
+        },
+        accessibleName: accessibleNameProperty,
+        visibleProperty: isDisconnectedProperty,
+      });
+
     const connectButton = bluetoothAvailable
-      ? new RectangularPushButton({
-          ...FLAT_PANEL_PUSH_BUTTON_OPTIONS,
-          content: new Text(sensorStrings.connectStringProperty, {
-            font: LABEL_FONT,
-            fill: LIGHT_SURFACE_TEXT_FILL,
-          }),
-          // Deliberately not async: the browser must still see this call stack
-          // as part of the user gesture, and connect() reports failure through
-          // Properties rather than by rejecting.
-          listener: () => {
-            source.connect().catch(() => undefined);
-          },
-          accessibleName: a11y.controls.connectButtonStringProperty,
-          visibleProperty: isDisconnectedProperty,
-        })
+      ? createConnectButton(
+          SensorTransport.BLUETOOTH,
+          sensorStrings.connectBluetoothStringProperty,
+          a11y.controls.connectBluetoothButtonStringProperty,
+        )
+      : null;
+
+    const connectUsbButton = usbAvailable
+      ? createConnectButton(
+          SensorTransport.USB,
+          sensorStrings.connectUsbStringProperty,
+          a11y.controls.connectUsbButtonStringProperty,
+        )
       : null;
 
     const disconnectButton = new RectangularPushButton({
@@ -168,6 +202,8 @@ export class SensorPanel extends MotionSensorPanel {
       lineWrap: CONTROL_PANEL_WIDTH - 40,
     });
 
+    // Only when neither transport is reachable: with one of them working there
+    // is a button to press, and a sentence about the other would be noise.
     const unavailableText = new RichText(
       status === BluetoothStatus.INSECURE_CONTEXT
         ? sensorStrings.unavailableInsecureStringProperty
@@ -175,7 +211,7 @@ export class SensorPanel extends MotionSensorPanel {
       {
         font: MESSAGE_FONT,
         fill: MotionSensorColors.textColorProperty,
-        visible: !bluetoothAvailable,
+        visible: !(bluetoothAvailable || usbAvailable),
         lineWrap: CONTROL_PANEL_WIDTH - 40,
       },
     );
@@ -215,6 +251,7 @@ export class SensorPanel extends MotionSensorPanel {
           statusRow,
           deviceNameText,
           ...(connectButton === null ? [] : [connectButton]),
+          ...(connectUsbButton === null ? [] : [connectUsbButton]),
           disconnectButton,
           unavailableText,
           errorText,
@@ -227,6 +264,7 @@ export class SensorPanel extends MotionSensorPanel {
     );
 
     this.connectButton = connectButton;
+    this.connectUsbButton = connectUsbButton;
     this.disconnectButton = disconnectButton;
 
     this.disposeSensorPanel = () => {

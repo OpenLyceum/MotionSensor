@@ -46,14 +46,15 @@
     "headerPattern": "{{name}} ({{unit}})"
   },
   "sensor": {
-    "connect": "Connecter le capteur",
+    "connectBluetooth": "Connecter en Bluetooth",
+    "connectUsb": "Connecter en USB",
     "disconnect": "Déconnecter",
     "statusDisconnected": "Déconnecté",
     "statusConnecting": "Connexion…",
     "statusConnected": "Connecté",
     "statusError": "Problème de connexion",
     "lostConnection": "Le capteur s'est déconnecté.",
-    "unavailableInsecure": "Web Bluetooth exige une page sécurisée. Ouvrez cette simulation en HTTPS, ou sur localhost.",
+    "unavailableInsecure": "La connexion au capteur exige une page sécurisée. Ouvrez cette simulation en HTTPS, ou sur localhost.",
     "unavailableBrowser": "Ce navigateur ne peut pas se connecter au capteur. Utilisez Chrome, Edge ou Opera.",
     "rawPositionPattern": "Capteur : {{position}} m"
   },
@@ -108,7 +109,8 @@
       "controls": {
         "walker": "Mesure du capteur",
         "walkerHelp": "Ce repère suit le capteur de mouvement. Marchez vers le capteur ou éloignez-vous pour le déplacer.",
-        "connectButton": "Se connecter à un capteur de mouvement sans fil PASCO",
+        "connectBluetoothButton": "Se connecter en Bluetooth à un capteur de mouvement sans fil PASCO",
+        "connectUsbButton": "Se connecter à un capteur de mouvement PASCO branché en USB",
         "disconnectButton": "Déconnecter le capteur de mouvement",
         "recordButton": "Démarrer l'enregistrement",
         "stopButton": "Arrêter l'enregistrement",

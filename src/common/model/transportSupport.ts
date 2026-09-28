@@ -1,11 +1,11 @@
 /**
- * bluetoothSupport.ts
+ * transportSupport.ts
  *
- * Whether this browser can talk to the sensor at all, reduced to something the
- * view can switch on.
+ * Whether this browser can talk to the sensor at all, over either transport,
+ * reduced to something the view can switch on.
  *
- * The result is memoized: it cannot change during a session, and the view asks
- * for it every time it rebuilds the sensor panel.
+ * The results are memoized: they cannot change during a session, and the view
+ * asks for them every time it rebuilds the sensor panel.
  */
 
 import MotionSensorNamespace from "../../MotionSensorNamespace.js";
@@ -50,9 +50,29 @@ export function isBluetoothAvailable(): boolean {
   return getBluetoothStatus() === BluetoothStatus.AVAILABLE;
 }
 
-/** Clears the memo. Exists for unit tests, which vary the environment. */
+let cachedUsbAvailable: boolean | null = null;
+
+/**
+ * Whether the sensor can be reached over WebUSB — a cable, no pairing.
+ *
+ * WebUSB rides on the same two conditions as Web Bluetooth (a Chromium browser
+ * on a secure origin), so a browser that has one very nearly always has the
+ * other; they are asked separately because "very nearly" is not "always", and a
+ * missing API here means a button the student must not be shown.
+ */
+export function isWebUsbAvailable(): boolean {
+  if (cachedUsbAvailable !== null) {
+    return cachedUsbAvailable;
+  }
+  cachedUsbAvailable =
+    typeof window !== "undefined" && typeof navigator !== "undefined" && window.isSecureContext && "usb" in navigator;
+  return cachedUsbAvailable;
+}
+
+/** Clears the memos. Exists for unit tests, which vary the environment. */
 export function clearBluetoothStatusCache(): void {
   cachedStatus = null;
+  cachedUsbAvailable = null;
 }
 
 MotionSensorNamespace.register("BluetoothStatus", BluetoothStatus);

@@ -14,11 +14,12 @@
  *           (a wall, a table edge, a passing classmate) and dropped, so the
  *           walker holds its last position instead of jumping across the track.
  *
- * The reason it is host-side: PASCO's configuration opcodes are not part of the
- * small wire protocol this sim speaks (see PascoMotionProtocol.ts), and guessing
- * a command to write to real hardware is not something to do on a hunch. If the
- * opcode is ever documented, the switch belongs in the protocol module and this
- * gate becomes a fallback for devices that reject it.
+ * The reason it is host-side: the only range command known
+ * (`setRangeCommand` in PascoMotionProtocol.ts) was recovered from SPARKvue's
+ * WebAssembly build, not captured off the wire, and has not been verified on
+ * hardware — writing it to a student's device on that basis is not something to
+ * do on a hunch. Once verified, the switch belongs in the protocol module and
+ * this gate becomes a fallback for devices that reject it.
  */
 
 import { LONG_RANGE_MAXIMUM_M, SHORT_RANGE_MAXIMUM_M } from "../../MotionSensorConstants.js";

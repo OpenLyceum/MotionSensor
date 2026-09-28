@@ -2,9 +2,9 @@
  * SensorModel.ts
  *
  * The Motion Sensor screen's model: MotionSensorModel driven by a real PASCO
- * Wireless Motion Sensor over Web Bluetooth. Identical to the Simulation screen
- * in every other respect — same clock, same lifecycle, same derived quantities —
- * which is the whole point of the two-screen pairing. Walking in front of the
+ * Wireless Motion Sensor over Web Bluetooth or WebUSB. Identical to the
+ * Simulation screen in every other respect — same clock, same lifecycle, same
+ * derived quantities — which is the whole point of the two-screen pairing. Walking in front of the
  * sensor should produce the same graph as dragging the walker did.
  */
 
@@ -19,8 +19,12 @@ export class SensorModel extends MotionSensorModel {
   public readonly sensorSource: SensorPositionSource;
 
   public constructor(preferences: MotionSensorPreferencesModel) {
+    const usbBringUp = motionSensorQueryParameters.usbBringUp;
     const source = new SensorPositionSource({
       pollIntervalMs: motionSensorQueryParameters.pollIntervalMs,
+      streamingEnabled: motionSensorQueryParameters.sensorStreaming,
+      usbProbeOnly: usbBringUp === "probe" || usbBringUp === "probeAll",
+      usbAcceptAllDevices: usbBringUp === "all" || usbBringUp === "probeAll",
       diagnosticsEnabledProperty: preferences.showDiagnosticsProperty,
     });
     super({ sourceType: PositionSourceType.MOTION_SENSOR, source: source });

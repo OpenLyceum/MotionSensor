@@ -20,6 +20,7 @@
     "graphing",
     "data-logging",
     "web-bluetooth",
+    "webusb",
     "pasco",
     "pwa"
   ],
@@ -59,6 +60,7 @@
     "vite": "^8.3.0",
     "vite-plugin-pwa": "^1.3.0",
     "vitest": "^5.0.1",
+    "@types/w3c-web-usb": "^1.0.14",
     "@types/web-bluetooth": "^0.0.21"
   },
   "engines": {

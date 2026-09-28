@@ -46,14 +46,15 @@
     "headerPattern": "{{name}} ({{unit}})"
   },
   "sensor": {
-    "connect": "Connect Sensor",
+    "connectBluetooth": "Connect by Bluetooth",
+    "connectUsb": "Connect by USB",
     "disconnect": "Disconnect",
     "statusDisconnected": "Disconnected",
     "statusConnecting": "Connecting…",
     "statusConnected": "Connected",
     "statusError": "Connection problem",
     "lostConnection": "The sensor disconnected.",
-    "unavailableInsecure": "Web Bluetooth needs a secure page. Open this simulation over HTTPS, or on localhost.",
+    "unavailableInsecure": "Connecting to the sensor needs a secure page. Open this simulation over HTTPS, or on localhost.",
     "unavailableBrowser": "This browser cannot connect to the sensor. Use Chrome, Edge, or Opera.",
     "rawPositionPattern": "Sensor: {{position}} m"
   },
@@ -108,7 +109,8 @@
       "controls": {
         "walker": "Sensor reading",
         "walkerHelp": "This marker follows the motion sensor. Walk toward or away from the sensor to move it.",
-        "connectButton": "Connect to a PASCO wireless motion sensor",
+        "connectBluetoothButton": "Connect to a PASCO wireless motion sensor over Bluetooth",
+        "connectUsbButton": "Connect to a PASCO motion sensor plugged in over USB",
         "disconnectButton": "Disconnect the motion sensor",
         "recordButton": "Start recording",
         "stopButton": "Stop recording",

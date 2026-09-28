@@ -281,6 +281,7 @@ export class MotionSensorScreenView extends ScreenView {
           recordControl.sampleRateComboBox,
           ...(providedOptions.writablePositionProperty ? [playAreaNode.walkerNode] : []),
           ...(sensorPanel?.connectButton ? [sensorPanel.connectButton] : []),
+          ...(sensorPanel?.connectUsbButton ? [sensorPanel.connectUsbButton] : []),
           ...(sensorPanel ? [sensorPanel.disconnectButton] : []),
           ...(sensorOptionsPanel
             ? [

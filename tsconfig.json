@@ -24,7 +24,7 @@
     "verbatimModuleSyntax": true,
     "noUncheckedSideEffectImports": true,
     "erasableSyntaxOnly": true,
-    "types": ["vite/client", "vite-plugin-pwa/client", "web-bluetooth"]
+    "types": ["vite/client", "vite-plugin-pwa/client", "web-bluetooth", "w3c-web-usb"]
   },
   "include": ["src"]
 }

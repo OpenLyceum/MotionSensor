@@ -2,12 +2,17 @@
  * SensorPositionSource.ts
  *
  * The Motion Sensor screen's source: a PASCO Wireless Motion Sensor (PS-3219)
- * reached directly through Web Bluetooth using its small PASCO wire protocol.
+ * reached directly over Web Bluetooth or WebUSB using its small PASCO wire
+ * protocol.
  *
- * ── Polling, not streaming ────────────────────────────────────────────────────
- * One `readEchoTime` is one BLE round trip. Polling begins only when a run is
- * started and stops when that run ends, silencing the ultrasonic transducer
- * between attempts while leaving the Bluetooth connection ready.
+ * ── Either transport, polled or streamed ──────────────────────────────────────
+ * Web Bluetooth and WebUSB carry the same PASCO packets, so `connect()` takes
+ * the transport as an argument and everything below this class is shared.
+ * Sampling begins only when a recording starts and stops when it ends,
+ * silencing the ultrasonic transducer in between while leaving the connection
+ * ready. One `readEchoTime` is one round trip; where the transport can carry a
+ * stream the device keeps time itself instead and pushes samples — see
+ * `startSampling`.
  *
  * ── What the device measures, and what this publishes ─────────────────────────
  * The device answers with an echo time, and nothing else. Everything a student
@@ -38,16 +43,44 @@ import {
   SENSOR_REPORTED_RANGE_M,
 } from "../../MotionSensorConstants.js";
 import MotionSensorNamespace from "../../MotionSensorNamespace.js";
-import { BluetoothMotionSensor, DeviceSelectionCancelled } from "../../sensor/model/BluetoothMotionSensor.js";
+import { BluetoothMotionSensor } from "../../sensor/model/BluetoothMotionSensor.js";
+import { DeviceSelectionCancelled, type TMotionSensorDevice } from "../../sensor/model/MotionSensorDevice.js";
 import { echoTimeToMetres } from "../../sensor/model/PascoMotionProtocol.js";
+import { UsbMotionSensor } from "../../sensor/model/UsbMotionSensor.js";
 import { ConnectionState, type ConnectionStateValue } from "./ConnectionState.js";
 import { PositionSourceType, type PositionSourceTypeValue, type TPositionSource } from "./PositionSource.js";
 import { SensorRange, type SensorRangeValue } from "./SensorRange.js";
 import { adjustReading, isEchoInRange } from "./sensorMeasurement.js";
 
+/** The two ways a PS-3219 can be reached from a browser. */
+export const SensorTransport = {
+  BLUETOOTH: "bluetooth",
+  USB: "usb",
+} as const;
+
+export type SensorTransportValue = (typeof SensorTransport)[keyof typeof SensorTransport];
+
+/**
+ * How long a stream may say nothing before the recording gives up on it and
+ * polls instead. Long enough to cover a slow first sample, short enough that a
+ * short recording still gets a trace.
+ */
+const STREAM_SILENCE_TIMEOUT_MS = 1000;
+
 export type SensorPositionSourceOptions = {
-  /** Poll period in milliseconds; overridable from a query parameter for bring-up. */
+  /**
+   * Sample period in milliseconds — the poll period, or the period the device
+   * is asked to keep when it is streaming. Overridable from a query parameter.
+   */
   readonly pollIntervalMs?: number;
+  /**
+   * Let a transport that can carry a stream put the device on its own clock.
+   * False polls everywhere; transports without a stream poll regardless.
+   */
+  readonly streamingEnabled?: boolean;
+  /** USB bring-up switches; ignored on Bluetooth. */
+  readonly usbProbeOnly?: boolean;
+  readonly usbAcceptAllDevices?: boolean;
   /**
    * When true, publishes the raw echo time and calculated position.
    */
@@ -107,11 +140,14 @@ export class SensorPositionSource implements TPositionSource {
   private readonly availableProperty: BooleanProperty;
 
   private readonly pollIntervalMs: number;
+  private readonly streamingEnabled: boolean;
+  private readonly usbProbeOnly: boolean;
+  private readonly usbAcceptAllDevices: boolean;
   private readonly diagnosticsEnabledProperty: TReadOnlyProperty<boolean> | null;
   private readonly handleUnexpectedDisconnect: () => void;
   private readonly republishAdjusted: () => void;
 
-  private device: BluetoothMotionSensor | null = null;
+  private device: TMotionSensorDevice | null = null;
 
   /** Last distance the device actually reported, before any adjustment. Null before the first one. */
   private lastRawDistanceM: number | null = null;
@@ -121,6 +157,11 @@ export class SensorPositionSource implements TPositionSource {
 
   private pollTimerId: ReturnType<typeof setInterval> | null = null;
   private isPolling = false;
+  private isStreaming = false;
+  /** Whether a recording has asked for readings, whichever mechanism is serving it. */
+  private samplingRequested = false;
+  private streamWatchdogId: ReturnType<typeof setTimeout> | null = null;
+  private samplesSinceStreamStart = 0;
   /** Invalidates an asynchronous read if sampling stops while it is in flight. */
   private pollingGeneration = 0;
   private consecutiveFailures = 0;
@@ -128,6 +169,9 @@ export class SensorPositionSource implements TPositionSource {
 
   public constructor(providedOptions?: SensorPositionSourceOptions) {
     this.pollIntervalMs = providedOptions?.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS;
+    this.streamingEnabled = providedOptions?.streamingEnabled !== false;
+    this.usbProbeOnly = providedOptions?.usbProbeOnly === true;
+    this.usbAcceptAllDevices = providedOptions?.usbAcceptAllDevices === true;
     this.diagnosticsEnabledProperty = providedOptions?.diagnosticsEnabledProperty ?? null;
 
     // The published value can be negative (sign flipped) or beyond the track
@@ -174,12 +218,15 @@ export class SensorPositionSource implements TPositionSource {
   }
 
   /**
-   * Opens the browser's device picker and connects. Never rejects.
+   * Opens the browser's device picker for the given transport and connects.
+   * Never rejects.
    *
+   * The transport is an argument rather than a constructor option because the
+   * panel offers both and the student picks one at the moment of connecting.
    * The device picker is invoked before the first await so the browser still
    * recognizes the Connect button's user gesture.
    */
-  public async connect(): Promise<void> {
+  public async connect(transport: SensorTransportValue = SensorTransport.BLUETOOTH): Promise<void> {
     if (this.connectionStateProperty.value === ConnectionState.CONNECTING) {
       return;
     }
@@ -187,7 +234,14 @@ export class SensorPositionSource implements TPositionSource {
     this.connectionStateProperty.value = ConnectionState.CONNECTING;
     this.errorMessageProperty.value = null;
 
-    const device = new BluetoothMotionSensor(this.handleUnexpectedDisconnect);
+    const device: TMotionSensorDevice =
+      transport === SensorTransport.USB
+        ? new UsbMotionSensor(this.handleUnexpectedDisconnect, {
+            probeOnly: this.usbProbeOnly,
+            acceptAllDevices: this.usbAcceptAllDevices,
+            logDetails: this.diagnosticsEnabledProperty?.value === true,
+          })
+        : new BluetoothMotionSensor(this.handleUnexpectedDisconnect);
     this.device = device;
 
     try {
@@ -210,6 +264,11 @@ export class SensorPositionSource implements TPositionSource {
     this.availableProperty.value = true;
     this.consecutiveFailures = 0;
     this.diagnosticsStartTimeMs = performance.now();
+
+    if (this.usbProbeOnly) {
+      // The whole point of a probe is that the device is left untouched.
+      this.diagnosticsProperty.value = device.diagnosticText ?? "probe complete";
+    }
   }
 
   /** Tears the link down deliberately. Never rejects. */
@@ -231,15 +290,62 @@ export class SensorPositionSource implements TPositionSource {
   }
 
   public startSampling(): void {
-    if (this.pollTimerId !== null) {
+    if (this.samplingRequested || this.usbProbeOnly) {
       return;
     }
+    this.samplingRequested = true;
     // Zero-at-start is armed rather than applied: the offset is whatever the
     // *first accepted reading* of this run turns out to be, which is where the
     // student was standing when they pressed Record.
     this.zeroOnNextReading = this.zeroAtStartProperty.value;
-    const generation = ++this.pollingGeneration;
     this.diagnosticsStartTimeMs = performance.now();
+
+    // Streaming lets the device keep time, which removes the round-trip jitter
+    // a poll cannot avoid. It needs a transport that can carry the stream;
+    // anything else polls, which always works.
+    const device = this.device;
+    if (this.streamingEnabled && device?.startStreaming) {
+      this.isStreaming = true;
+      this.samplesSinceStreamStart = 0;
+      // A device can accept the start command and then push nothing — the one
+      // failure a stream cannot report, because there is no round trip left to
+      // fail. Without this the recording would be flat and say why nowhere, so
+      // silence is given a deadline and answered by polling.
+      this.streamWatchdogId = setTimeout(() => {
+        this.streamWatchdogId = null;
+        if (this.samplingRequested && this.isStreaming && this.samplesSinceStreamStart === 0) {
+          this.diagnosticsProperty.value = "stream silent; polling instead";
+          this.isStreaming = false;
+          device.stopStreaming?.().catch(() => undefined);
+          this.startPolling();
+        }
+      }, STREAM_SILENCE_TIMEOUT_MS);
+      device
+        .startStreaming(this.pollIntervalMs, (echoTimeMicroseconds) => {
+          this.acceptReading(echoTimeMicroseconds);
+        })
+        .catch((error: unknown) => {
+          // A device that will not stream still answers single reads, so the
+          // recording carries on polling rather than recording nothing at all.
+          // Unless it ended while the refusal was in flight, in which case the
+          // request is gone and starting a timer now would outlive it.
+          this.isStreaming = false;
+          this.diagnosticsProperty.value = `streaming refused: ${error instanceof Error ? error.message : error}`;
+          if (this.samplingRequested) {
+            this.startPolling();
+          }
+        });
+      return;
+    }
+
+    this.startPolling();
+  }
+
+  private startPolling(): void {
+    if (this.pollTimerId !== null) {
+      return;
+    }
+    const generation = ++this.pollingGeneration;
     this.poll(generation).catch(() => undefined);
     this.pollTimerId = setInterval(() => {
       this.poll(generation).catch(() => undefined);
@@ -247,13 +353,24 @@ export class SensorPositionSource implements TPositionSource {
   }
 
   public stopSampling(): void {
+    this.samplingRequested = false;
     this.pollingGeneration += 1;
     this.zeroOnNextReading = false;
+    if (this.streamWatchdogId !== null) {
+      clearTimeout(this.streamWatchdogId);
+      this.streamWatchdogId = null;
+    }
     if (this.pollTimerId !== null) {
       clearInterval(this.pollTimerId);
       this.pollTimerId = null;
     }
     this.isPolling = false;
+    this.isStreaming = false;
+    // Asked for unconditionally, not just when this class believes it is
+    // streaming. A streaming device keeps its own clock: if the stop is missed
+    // it goes on ranging for as long as it has power, which is the one failure
+    // here that outlives the recording. `stopStreaming` knows whether it is owed.
+    this.device?.stopStreaming?.().catch(() => undefined);
   }
 
   /**
@@ -273,25 +390,16 @@ export class SensorPositionSource implements TPositionSource {
       if (generation !== this.pollingGeneration) {
         return;
       }
-      const metres = echoTimeToMetres(echoTimeMicroseconds);
-      this.diagnosticsProperty.value = `${POSITION_MEASUREMENT}=${metres}`;
-
-      if (this.diagnosticsEnabledProperty?.value === true) {
-        const elapsedSeconds = (performance.now() - this.diagnosticsStartTimeMs) / 1000;
-        // biome-ignore lint/suspicious/noConsole: Explicit hardware bring-up diagnostics.
-        console.info(`[MotionSensor sensor +${elapsedSeconds.toFixed(3)} s]`, {
-          EchoTimeMicroseconds: echoTimeMicroseconds,
-          Position: metres,
-        });
-      }
-
-      this.consecutiveFailures = 0;
-      this.publishDistance(metres);
+      this.acceptReading(echoTimeMicroseconds);
     } catch (error) {
       if (generation !== this.pollingGeneration) {
         return;
       }
       this.consecutiveFailures += 1;
+      if (this.diagnosticsEnabledProperty?.value === true) {
+        // biome-ignore lint/suspicious/noConsole: Explicit hardware bring-up diagnostics.
+        console.warn("[MotionSensor sensor] read failed", error, device.diagnosticText ?? "");
+      }
       if (this.consecutiveFailures >= MAXIMUM_CONSECUTIVE_FAILURES) {
         this.stopSampling();
         this.availableProperty.value = false;
@@ -303,18 +411,41 @@ export class SensorPositionSource implements TPositionSource {
     }
   }
 
+  /** One reading, however it arrived — polled round trip or pushed by the device. */
+  private acceptReading(echoTimeMicroseconds: number): void {
+    const metres = echoTimeToMetres(echoTimeMicroseconds);
+    this.diagnosticsProperty.value = `${POSITION_MEASUREMENT}=${metres}`;
+
+    if (this.diagnosticsEnabledProperty?.value === true) {
+      const elapsedSeconds = (performance.now() - this.diagnosticsStartTimeMs) / 1000;
+      // biome-ignore lint/suspicious/noConsole: Explicit hardware bring-up diagnostics.
+      console.info(`[MotionSensor sensor +${elapsedSeconds.toFixed(3)} s]`, {
+        EchoTimeMicroseconds: echoTimeMicroseconds,
+        Position: metres,
+        ...(this.device?.diagnosticText ? { RawTransfer: this.device.diagnosticText } : {}),
+      });
+    }
+
+    this.consecutiveFailures = 0;
+    this.samplesSinceStreamStart += 1;
+    this.publishDistance(metres);
+  }
+
   /**
    * Takes the current reading as the new zero. Never rejects.
    *
-   * While a recording is running the poll loop owns the link — a second read
-   * would collide with the one in flight — so the most recent reading is used.
+   * While a recording is running the poll loop or the stream owns the link — a
+   * second read would collide with it — so the most recent reading is used.
    * Otherwise nothing is being read at all, and this asks the device for one
    * sample of its own, which is what makes the button useful while idle.
    */
   public async zeroNow(): Promise<void> {
-    if (this.pollTimerId === null && this.device !== null && this.device.isConnected) {
+    // A probed device is left alone, and a recording already owns the link.
+    const linkIsFree = !(this.samplingRequested || this.usbProbeOnly);
+    const device = this.device;
+    if (linkIsFree && device?.isConnected) {
       try {
-        const echoTimeMicroseconds = await this.device.readEchoTime();
+        const echoTimeMicroseconds = await device.readEchoTime();
         const metres = echoTimeToMetres(echoTimeMicroseconds);
         if (isEchoInRange(metres, this.rangeProperty.value)) {
           this.lastRawDistanceM = metres;

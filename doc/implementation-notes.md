@@ -70,10 +70,28 @@ little-endian echo time in microseconds.
    `errorMessageProperty`. A dismissed device picker returns to DISCONNECTED
    with no error — cancelling is not failing.
 
-3. **Polling, not streaming.** `readEchoTime` is one BLE round trip. The poll loop
-   is re-entrancy guarded and tolerates `MAXIMUM_CONSECUTIVE_FAILURES` dropped
-   reads before declaring an error; skipping a tick is harmless because the
-   model samples the latest value.
+3. **Polled over Bluetooth, streamed over USB.** `readEchoTime` is one round
+   trip. The poll loop is re-entrancy guarded and tolerates
+   `MAXIMUM_CONSECUTIVE_FAILURES` dropped reads before declaring an error;
+   skipping a tick is harmless because the model samples the latest value. A
+   transport that can carry a stream (USB) instead puts the device on its own
+   clock at `pollIntervalMs`; if it pushes nothing within a second the source
+   stops it and polls.
+
+### Two transports, one device interface
+
+`TMotionSensorDevice` (`src/sensor/model/MotionSensorDevice.ts`) is the seam
+between `BluetoothMotionSensor` and `UsbMotionSensor`; the PASCO packets are
+identical and only the envelope differs. The panel shows one Connect button per
+transport the browser supports, and the click picks the transport.
+
+All four files under `src/sensor/model/` are **copied from MotionMatch**, where
+the USB framing, the bridge-enable control transfer and the stream packet
+layout were recovered — its `doc/implementation-notes.md` has the full account.
+Fixes to either copy have to be ported by hand. One such fix worth knowing:
+WebUSB cannot cancel a `transferIn`, so a read that outruns its deadline is kept
+and awaited again by the next read, never abandoned — an abandoned one swallows
+the device's next packet and leaves every later read one behind.
 
 ## The configurable graph
 
@@ -148,8 +166,13 @@ devices that reject it.
 
 ## Things that will bite
 
-- **Web Bluetooth needs a user gesture.** The `requestDevice()` call in
-  `connect()` is synchronous for that reason. Do not `await` anything ahead of it.
+- **Both pickers need a user gesture.** The `requestDevice()` call in each
+  transport's `connect()` is reached synchronously for that reason. Do not
+  `await` anything ahead of it.
+- **A streaming device must be told to stop.** Clearing a timer silences a
+  polled sensor; a streamed one keeps its own clock until `STOP_SAMPLING`
+  arrives, and USB keeps it powered. `stopSampling()` always asks
+  `stopStreaming()`, which knows whether a stop is owed.
 - **The sample rate is captured at Record, not read per tick.** A rate change
   mid-run would put two spacings on one trace and make `index × period` disagree
   with the samples already taken; `Trace` holds its own window size for the same
@@ -182,13 +205,17 @@ devices that reject it.
 | Parameter | Default | Purpose |
 |---|---|---|
 | `?showDiagnostics=` | false | Show the device's measurement list and raw readings |
-| `?pollIntervalMs=` | 40 | Sensor poll period; raise it when debugging a flaky link |
+| `?pollIntervalMs=` | 40 | Sensor sample period (poll or stream); raise it when debugging a flaky link |
+| `?sensorStreaming=` | true | `false` forces polling on a transport that could stream (USB) |
+| `?usbBringUp=` | off | `probe` claims a USB device and reports its descriptors without sending anything; `all` drops the vendor filter; `probeAll` does both |
 
 ## Testing
 
 Transports cannot be exercised headless, which is exactly why the pure layers
 are covered: `motionMath.test.ts` (the differentiator, including its ends),
-`PascoMotionProtocol.test.ts` (the wire format), and `MotionSensorModel.test.ts`
+`PascoMotionProtocol.test.ts` (the wire format, both envelopes),
+`UsbMotionSensor.test.ts` (the stream's stop is always sent; a timed-out read
+never costs the next answer), and `MotionSensorModel.test.ts`
 (the recording state machine, exact sample times, the dt clamp, the derivative
 signs and the duration cap).
 

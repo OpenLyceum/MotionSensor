@@ -4,7 +4,7 @@
 
 Record how something moves and read the result off a graph you configure
 yourself — with the mouse on one screen, or by walking in front of a PASCO
-Wireless Motion Sensor over Web Bluetooth on the other. Position, velocity and
+Wireless Motion Sensor over Web Bluetooth or USB on the other. Position, velocity and
 acceleration are all measured from the same motion, so the relationships between
 them are something you discover rather than something the simulation asserts.
 
@@ -22,7 +22,7 @@ them are something you discover rather than something the simulation asserts.
   zoom with the wheel or the buttons, pan, or rescale it to fit the data.
 - **Two screens, one activity.** Drag a figure with mouse, touch or keyboard;
   then do the same thing with a real **PASCO Wireless Motion Sensor (PS-3219)**
-  over Web Bluetooth — no driver, no app, no install.
+  over Web Bluetooth or a USB cable — no driver, no app, no install.
 - **A table of the numbers, and a CSV of them.** *Show table* puts two chosen
   quantities side by side, one row per sample, following the newest row as a
   recording grows — and *Download CSV* writes exactly those two columns to a
@@ -46,10 +46,10 @@ npm start         # → http://localhost:5173
 ```
 
 To use a real sensor, open the **Motion Sensor** screen in **Chrome, Edge or
-Opera** over HTTPS (or `localhost`), switch the PS-3219 on, and press *Connect
-Sensor*. Stand the sensor at waist height with three or four metres of clear
-floor in front of it. Firefox and Safari have no Web Bluetooth; the screen says
-so instead of offering a button that cannot work.
+Opera** over HTTPS (or `localhost`), switch the PS-3219 on (or plug it in), and
+press *Connect by Bluetooth* or *Connect by USB*. Stand the sensor at waist height with three or four metres of clear
+floor in front of it. Firefox and Safari have neither Web Bluetooth nor WebUSB;
+the screen says so instead of offering a button that cannot work.
 
 Add `?showDiagnostics=true` to see the device's measurement list and its raw
 readings — useful when bringing hardware up.
@@ -86,7 +86,7 @@ configuration opcodes are not part of the wire protocol this sim speaks.
 | Tool | Version | Notes |
 |---|---|---|
 | SceneryStack | ^3.0.0 | Simulation framework; `bamboo` for the graph |
-| Web Bluetooth | browser API | Direct, dependency-free PS-3219 communication |
+| Web Bluetooth / WebUSB | browser APIs | Direct, dependency-free PS-3219 communication |
 | Vite | ^8 | Build tool and dev server |
 | TypeScript | ^7 | `erasableSyntaxOnly` — no `enum`, no `namespace` |
 | Biome | ^2.5 | Lint + format |
@@ -95,8 +95,8 @@ configuration opcodes are not part of the wire protocol this sim speaks.
 | vite-plugin-pwa | ^1 | Installable / offline |
 
 Hardware: **PASCO Wireless Motion Sensor PS-3219** (0.15–4 m, 1 mm resolution,
-Bluetooth 5.2). Web Bluetooth requires a Chromium-based browser and a secure
-origin.
+Bluetooth 5.2 or USB). Web Bluetooth and WebUSB require a Chromium-based
+browser and a secure origin.
 
 ## License
 

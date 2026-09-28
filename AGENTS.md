@@ -7,7 +7,7 @@ Sim-specific context for AI assistants. General SceneryStack guidance:
 
 Record position over time and plot it on a graph whose axes the student chooses
 — with the mouse on the **Simulation** screen, or in front of a PASCO Wireless
-Motion Sensor (PS-3219) over Web Bluetooth on the **Motion Sensor** screen. The
+Motion Sensor (PS-3219) over Web Bluetooth or WebUSB on the **Motion Sensor** screen. The
 same recording can be read as a table of two columns and downloaded as CSV.
 A data logger, not a game: there is no target curve and no score.
 
@@ -23,7 +23,10 @@ Read both before changing model code.
 | `src/common/model/Trace.ts` | The sample buffer + cached velocity / acceleration series |
 | `src/common/model/motionMath.ts` | Least-squares derivative + windowed differentiator (pure) |
 | `src/common/model/PositionSource.ts` | `TPositionSource` — the seam between the two screens |
-| `src/common/model/SensorPositionSource.ts` | The PASCO link: lazy device, poll loop, never-rejecting connect |
+| `src/common/model/SensorPositionSource.ts` | The PASCO link: transport choice, poll / stream loop, never-rejecting connect |
+| `src/common/model/transportSupport.ts` | Whether this browser has Web Bluetooth / WebUSB at all |
+| `src/sensor/model/MotionSensorDevice.ts` | `TMotionSensorDevice` — the seam between the two transports |
+| `src/sensor/model/UsbMotionSensor.ts` | WebUSB sibling of `BluetoothMotionSensor`; same packets. Copied from MotionMatch |
 | `src/common/view/MotionSensorScreenView.ts` | **One** ScreenView, used by both screens |
 | `src/common/view/graph/` | `ConfigurableGraph` and its data manager, controls panel and gesture handler |
 | `src/common/view/DataTableNode.ts` | The recording as two chosen columns, scrolling + CSV download |
@@ -96,13 +99,17 @@ Vitest on `happy-dom` with the template `tests/setup.ts`; tests live only under 
 | `tests/common/view/dataTableCsv.test.ts` | unit tests |
 | `tests/memory-leak.test.ts` | `describeDisposalLeaks` over the sim's disposables (shared harness `tests/helpers/memoryLeak.ts`) |
 | `tests/sensor/model/PascoMotionProtocol.test.ts` | unit tests |
+| `tests/sensor/model/UsbMotionSensor.test.ts` | unit tests |
 | `tests/fuzz/fuzz.spec.ts` | template fuzz smoke (pointer + keyboard, `?ea`) — `npm run test:fuzz` |
 
 ### Hardware testing
 
-Needs a PS-3219, Chrome/Edge/Opera, and HTTPS or `localhost`. There is no way to
-exercise the transport in CI, which is why everything above it is pure and unit
-tested.
+Needs a PS-3219, Chrome/Edge/Opera, and HTTPS or `localhost`. The panel offers
+one Connect button per transport the browser supports — Bluetooth and USB — so
+either can be tried without a query parameter; `?usbBringUp=probe` still claims
+a USB device and reports its descriptors without sending it anything. There is
+no way to exercise either transport in CI, which is why everything above them is
+pure and unit tested.
 
 ```bash
 npm start   # then open the Motion Sensor screen
@@ -111,7 +118,10 @@ npm start   # then open the Motion Sensor screen
 `?showDiagnostics=true` prints the device's measurement list and the raw value
 of every measurement each poll — the way to tell a genuine zero reading
 (nothing within 0.15–4 m to echo off) from a device answering nothing at all.
-`?pollIntervalMs=` raises the poll period when debugging a flaky link.
+`?pollIntervalMs=` raises the sample period — polled, or streamed over USB —
+when debugging a flaky link. `?sensorStreaming=false` forces polling on a
+transport that would otherwise keep the device's own clock (USB does; Bluetooth
+cannot).
 
 ## Commands
 
@@ -126,8 +136,15 @@ check that constructs both screens in a real browser.
 
 ### Things that will bite
 
-- **Web Bluetooth needs a user gesture** — `requestDevice()` must be reached
-  directly from the Connect button. Do not add an `await` ahead of it.
+- **Both pickers need a user gesture** — `requestDevice()` must be reached
+  directly from a Connect button. Do not add an `await` ahead of it.
+- **A streaming device must be told to stop.** Clearing a timer silences a
+  polled sensor; a streamed one keeps its own clock until `STOP_SAMPLING`
+  arrives, and USB keeps it powered. `deviceIsSampling` (a stop is owed) is
+  deliberately separate from `draining` (the read loop is alive) — never merge
+  them.
+- **`src/sensor/model/` is a copy of MotionMatch's.** Port fixes both ways by
+  hand.
 - **`connect()` never rejects.** Outcomes land on Properties. A dismissed picker
   throws `DeviceSelectionCancelled` internally and is not shown as an error.
 - **Never accumulate recording time in a float.** Sample times are
@@ -139,8 +156,9 @@ check that constructs both screens in a real browser.
 - **The table and the graph share one plottable list.** Feed
   `DataTableNode` the array the graph gets; two lists would let a name mean
   different series in the two places.
-- **Sensor Range is a host-side filter, not a device command.** PASCO's config
-  opcodes are not in `PascoMotionProtocol.ts` — do not invent one. See
+- **Sensor Range is a host-side filter, not a device command.**
+  `PascoMotionProtocol.ts` does carry a `setRangeCommand`, recovered from
+  SPARKvue and unverified on hardware; nothing here sends it. See
   `SensorRange.ts`.
 - **`dispose()` must stay idempotent** — axon Properties throw on double
   dispose, and the memory-leak suite disposes twice on purpose. The ScreenView

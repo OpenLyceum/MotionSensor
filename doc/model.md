@@ -130,8 +130,8 @@ While recording, the sim requests the two-byte echo time every 40 ms — faster
 than it samples at every rate up to 20 Hz, so a fresh reading is waiting when the
 fixed clock takes one. At 50 Hz the link is the limit and some samples repeat the
 previous reading. Polling stops when the recording does, so the transducer is
-silent and the last position remains displayed. The Bluetooth connection stays
-open for another recording.
+silent and the last position remains displayed. The connection stays open for
+another recording.
 
 ### From echo time to published position
 
