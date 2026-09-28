@@ -33,7 +33,9 @@ Read both before changing model code.
 | `src/common/view/PlayAreaNode.ts` | Track, sensor, walker + drag / keyboard listeners |
 | `src/simulation/`, `src/sensor/` | Thin screen packages; the models are ten lines each |
 
-## The two screens are one view
+## Model
+
+### The two screens are one view
 
 `SimulationModel` and `SensorModel` differ only in which `TPositionSource` they
 construct, and both screens instantiate the same `MotionSensorScreenView`. Two
@@ -42,7 +44,7 @@ walker draggable) and `sensorSource` (adds the connection panel). **Do not fork
 the view.** A student should recognise the sensor screen instantly, and sameness
 by construction is the only way to guarantee that.
 
-## The graph
+### The graph
 
 `src/common/view/graph/` is a **copy-fork**, not a shared library. The same
 component lives in OscillationsAndChaos, Resonance, ACPhasor and TrackLab, each
@@ -65,7 +67,64 @@ Two things about it are specific to this sim:
   recording can be read on several pairs of axes. The series must stay
   index-aligned — they all come off the same clock.
 
-## Things that will bite
+## Accessibility
+
+Follows the shared [OpenLyceum accessibility convention](https://github.com/OpenLyceum/Baton/blob/main/ACCESSIBILITY.md).
+A11y strings live under the `a11y` key of each locale JSON, read through `StringManager`.
+
+- Screen summaries: `src/sensor/view/SensorScreenSummaryContent.ts`, `src/simulation/view/SimulationScreenSummaryContent.ts`
+- Keyboard Shortcuts dialog: `src/common/view/MotionSensorKeyboardHelpContent.ts`
+- Keyboard-draggable objects: `src/common/view/PlayAreaNode.ts`, `src/common/view/graph/GraphInteractionHandler.ts`
+
+## Compliance carve-outs
+
+### `package.json` overrides
+
+Inherited from the template; rationale unchanged (`lodash`, `three`,
+`brace-expansion` pinned for advisories SceneryStack has not yet re-pinned).
+Dependabot ignores those three names.
+
+## Testing
+
+Vitest on `happy-dom` with the template `tests/setup.ts`; tests live only under `tests/`.
+
+| Path | Covers |
+|---|---|
+| `tests/common/model/MotionSensorModel.test.ts` | unit tests |
+| `tests/common/model/motionMath.test.ts` | unit tests |
+| `tests/common/model/sensorMeasurement.test.ts` | unit tests |
+| `tests/common/view/dataTableCsv.test.ts` | unit tests |
+| `tests/memory-leak.test.ts` | `describeDisposalLeaks` over the sim's disposables (shared harness `tests/helpers/memoryLeak.ts`) |
+| `tests/sensor/model/PascoMotionProtocol.test.ts` | unit tests |
+| `tests/fuzz/fuzz.spec.ts` | template fuzz smoke (pointer + keyboard, `?ea`) — `npm run test:fuzz` |
+
+### Hardware testing
+
+Needs a PS-3219, Chrome/Edge/Opera, and HTTPS or `localhost`. There is no way to
+exercise the transport in CI, which is why everything above it is pure and unit
+tested.
+
+```bash
+npm start   # then open the Motion Sensor screen
+```
+
+`?showDiagnostics=true` prints the device's measurement list and the raw value
+of every measurement each poll — the way to tell a genuine zero reading
+(nothing within 0.15–4 m to echo off) from a device answering nothing at all.
+`?pollIntervalMs=` raises the poll period when debugging a flaky link.
+
+## Commands
+
+```bash
+npm run lint && npm run check && npm run build && npm test
+```
+
+`npm run test:fuzz:quick` after any change to the sensor path — it is the only
+check that constructs both screens in a real browser.
+
+## Development notes
+
+### Things that will bite
 
 - **Web Bluetooth needs a user gesture** — `requestDevice()` must be reached
   directly from the Connect button. Do not add an `await` ahead of it.
@@ -96,58 +155,3 @@ Two things about it are specific to this sim:
 - **`LocalizedString` suffixes every leaf key**: `axes.position` is
   `axes.positionStringProperty`. Getting it wrong renders the literal
   `undefined`.
-
-## Compliance carve-outs
-
-### `package.json` overrides
-
-Inherited from the template; rationale unchanged (`lodash`, `three`,
-`brace-expansion` pinned for advisories SceneryStack has not yet re-pinned).
-Dependabot ignores those three names.
-
-## Hardware testing
-
-Needs a PS-3219, Chrome/Edge/Opera, and HTTPS or `localhost`. There is no way to
-exercise the transport in CI, which is why everything above it is pure and unit
-tested.
-
-```bash
-npm start   # then open the Motion Sensor screen
-```
-
-`?showDiagnostics=true` prints the device's measurement list and the raw value
-of every measurement each poll — the way to tell a genuine zero reading
-(nothing within 0.15–4 m to echo off) from a device answering nothing at all.
-`?pollIntervalMs=` raises the poll period when debugging a flaky link.
-
-## Commands
-
-```bash
-npm run lint && npm run check && npm run build && npm test
-```
-
-`npm run test:fuzz:quick` after any change to the sensor path — it is the only
-check that constructs both screens in a real browser.
-
-## Accessibility
-
-Follows the shared [OpenLyceum accessibility convention](https://github.com/OpenLyceum/Baton/blob/main/ACCESSIBILITY.md).
-A11y strings live under the `a11y` key of each locale JSON, read through `StringManager`.
-
-- Screen summaries: `src/sensor/view/SensorScreenSummaryContent.ts`, `src/simulation/view/SimulationScreenSummaryContent.ts`
-- Keyboard Shortcuts dialog: `src/common/view/MotionSensorKeyboardHelpContent.ts`
-- Keyboard-draggable objects: `src/common/view/PlayAreaNode.ts`, `src/common/view/graph/GraphInteractionHandler.ts`
-
-## Testing
-
-Vitest on `happy-dom` with the template `tests/setup.ts`; tests live only under `tests/`.
-
-| Path | Covers |
-|---|---|
-| `tests/common/model/MotionSensorModel.test.ts` | unit tests |
-| `tests/common/model/motionMath.test.ts` | unit tests |
-| `tests/common/model/sensorMeasurement.test.ts` | unit tests |
-| `tests/common/view/dataTableCsv.test.ts` | unit tests |
-| `tests/memory-leak.test.ts` | `describeDisposalLeaks` over the sim's disposables (shared harness `tests/helpers/memoryLeak.ts`) |
-| `tests/sensor/model/PascoMotionProtocol.test.ts` | unit tests |
-| `tests/fuzz/fuzz.spec.ts` | template fuzz smoke (pointer + keyboard, `?ea`) — `npm run test:fuzz` |
