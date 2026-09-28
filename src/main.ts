@@ -36,11 +36,13 @@ onReadyToLaunch(() => {
 
   const screens = [
     new SimulationScreen(simPreferences, {
+      // The screen name Property updates automatically when the locale changes
       name: stringManager.getScreenNames().simulationStringProperty,
       tandem: Tandem.ROOT.createTandem("simulationScreen"),
       backgroundColorProperty: MotionSensorColors.backgroundColorProperty,
     }),
     new SensorScreen(simPreferences, {
+      // The screen name Property updates automatically when the locale changes
       name: stringManager.getScreenNames().sensorStringProperty,
       tandem: Tandem.ROOT.createTandem("sensorScreen"),
       backgroundColorProperty: MotionSensorColors.backgroundColorProperty,
