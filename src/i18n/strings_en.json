@@ -23,6 +23,10 @@
   },
   "graph": {
     "vs": "vs",
+    "vsPaddedPattern": " {{vs}} ",
+    "leadingAxisPattern": "({{name}}",
+    "trailingAxisPattern": "{{name}})",
+    "titlePattern": "({{y}} {{vs}} {{x}})",
     "xAxis": "Horizontal axis",
     "yAxis": "Vertical axis",
     "rescale": "Rescale the axes to fit the data",

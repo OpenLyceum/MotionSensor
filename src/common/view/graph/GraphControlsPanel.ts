@@ -10,7 +10,13 @@
  * source swapped to this sim's StringManager.
  */
 
-import { DerivedProperty, type Property, type TReadOnlyProperty } from "scenerystack/axon";
+import {
+  DerivedProperty,
+  PatternStringProperty,
+  type Property,
+  StringProperty,
+  type TReadOnlyProperty,
+} from "scenerystack/axon";
 import { HBox, type Node, Rectangle, Text } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { ComboBox } from "scenerystack/sun";
@@ -124,31 +130,65 @@ export class GraphControlsPanel {
       accessibleName: graphStrings.yAxisStringProperty,
     });
 
-    // Create title in format "(Y vs X)"
-    const leftParen = new Text("(", {
-      font: TITLE_FONT,
-      fill: MotionSensorColors.textColorProperty,
+    // "(Y vs X)". Parentheses live in pattern strings beside each axis name so a
+    // locale can move them. The combo box is that name on screen, so the
+    // placeholder next to the glyph stays empty; the group's accessible name
+    // is the same pattern filled with the selected names.
+    const yNameProperty = this.axisLabelProperty(this.yPropertyProperty);
+    const xNameProperty = this.axisLabelProperty(this.xPropertyProperty);
+    // The combo box already draws the axis name. The slot stays empty so the
+    // pattern still owns the parenthesis without painting the name twice.
+    const axisSlotProperty = new StringProperty("");
+    const leadingPattern = new PatternStringProperty(graphStrings.leadingAxisPatternStringProperty, {
+      name: axisSlotProperty,
     });
-
-    const vsStringProperty = graphStrings.vsStringProperty;
-    const paddedVsProperty = new DerivedProperty([vsStringProperty], (vs: string) => ` ${vs} `);
-    const vsText = new Text(paddedVsProperty, {
-      font: TITLE_FONT,
-      fill: MotionSensorColors.textColorProperty,
+    const trailingPattern = new PatternStringProperty(graphStrings.trailingAxisPatternStringProperty, {
+      name: axisSlotProperty,
     });
-    this.disposables.push(xComboBox, yComboBox, vsText, paddedVsProperty);
-
-    const rightParen = new Text(")", {
-      font: TITLE_FONT,
-      fill: MotionSensorColors.textColorProperty,
+    const vsPattern = new PatternStringProperty(graphStrings.vsPaddedPatternStringProperty, {
+      vs: graphStrings.vsStringProperty,
     });
+    const titlePattern = new PatternStringProperty(graphStrings.titlePatternStringProperty, {
+      y: yNameProperty,
+      vs: graphStrings.vsStringProperty,
+      x: xNameProperty,
+    });
+    const leadingText = new Text(leadingPattern, { font: TITLE_FONT, fill: MotionSensorColors.textColorProperty });
+    const trailingText = new Text(trailingPattern, { font: TITLE_FONT, fill: MotionSensorColors.textColorProperty });
+    const vsText = new Text(vsPattern, { font: TITLE_FONT, fill: MotionSensorColors.textColorProperty });
+    this.disposables.push(
+      leadingText,
+      trailingText,
+      vsText,
+      titlePattern,
+      leadingPattern,
+      trailingPattern,
+      vsPattern,
+      axisSlotProperty,
+      yNameProperty,
+      xNameProperty,
+      xComboBox,
+      yComboBox,
+    );
 
-    // Arrange in horizontal layout: (Y vs X)
     return new HBox({
       spacing: TITLE_SPACING,
       align: "center",
-      children: [leftParen, yComboBox, vsText, xComboBox, rightParen],
+      tagName: "div",
+      accessibleName: titlePattern,
+      children: [leadingText, yComboBox, vsText, xComboBox, trailingText],
     });
+  }
+
+  /**
+   * The selected axis's display name, updating when the selection or its
+   * localized name changes.
+   */
+  private axisLabelProperty(axis: Property<PlottableProperty>): TReadOnlyProperty<string> {
+    const nameProperties: TReadOnlyProperty<unknown>[] = this.availableProperties.flatMap((plottable) =>
+      typeof plottable.name === "string" ? [] : [plottable.name],
+    );
+    return DerivedProperty.deriveAny([axis, ...nameProperties], () => this.getNameValue(axis.value.name));
   }
 
   /**

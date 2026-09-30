@@ -84,6 +84,14 @@ export type ScreenA11yStrings = {
  */
 export type GraphA11yStrings = {
   readonly vsStringProperty: ReadOnlyProperty<string>;
+  /** " {{vs}} " — spaces live in the pattern so locales can drop or move them. */
+  readonly vsPaddedPatternStringProperty: ReadOnlyProperty<string>;
+  /** "({{name}}" — the opening parenthesis stays with the vertical-axis name. */
+  readonly leadingAxisPatternStringProperty: ReadOnlyProperty<string>;
+  /** "{{name}})" — the closing parenthesis stays with the horizontal-axis name. */
+  readonly trailingAxisPatternStringProperty: ReadOnlyProperty<string>;
+  /** "({{y}} {{vs}} {{x}})" spoken for the title group. */
+  readonly titlePatternStringProperty: ReadOnlyProperty<string>;
   readonly xAxisStringProperty: ReadOnlyProperty<string>;
   readonly yAxisStringProperty: ReadOnlyProperty<string>;
   readonly rescaleStringProperty: ReadOnlyProperty<string>;

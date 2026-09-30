@@ -23,6 +23,10 @@
   },
   "graph": {
     "vs": "frente a",
+    "vsPaddedPattern": " {{vs}} ",
+    "leadingAxisPattern": "({{name}}",
+    "trailingAxisPattern": "{{name}})",
+    "titlePattern": "({{y}} {{vs}} {{x}})",
     "xAxis": "Eje horizontal",
     "yAxis": "Eje vertical",
     "rescale": "Ajustar los ejes a los datos",
