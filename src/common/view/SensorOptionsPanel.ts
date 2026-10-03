@@ -12,9 +12,20 @@
  * Every one of them is applied on the host, in {@link SensorPositionSource} —
  * see {@link SensorRange} for why the range is a filter here rather than a
  * command to the device.
+ *
+ * Change sign, zero now and remove zero are locked while a recording runs. Each
+ * moves every reading after it at once, so mid-run it would put a step into
+ * the trace — a jump in position and a spike in velocity and acceleration that
+ * no one walked. Zero at start (which only arms the next run) and the range (a
+ * filter on which echoes to believe, not a shift) stay available.
  */
 
-import { type BooleanProperty, DerivedProperty, PatternStringProperty } from "scenerystack/axon";
+import {
+  type BooleanProperty,
+  DerivedProperty,
+  PatternStringProperty,
+  type TReadOnlyProperty,
+} from "scenerystack/axon";
 import { toFixed } from "scenerystack/dot";
 import type { Node } from "scenerystack/scenery";
 import { HBox, Text, VBox } from "scenerystack/scenery";
@@ -26,6 +37,7 @@ import { CONTROL_PANEL_WIDTH } from "../../MotionSensorConstants.js";
 import { FLAT_PANEL_PUSH_BUTTON_OPTIONS, LIGHT_SURFACE_TEXT_FILL } from "../MotionSensorButtonOptions.js";
 import { SIM_CHECKBOX_OPTIONS } from "../MotionSensorControlOptions.js";
 import { MotionSensorPanel } from "../MotionSensorPanel.js";
+import { RunState, type RunStateValue } from "../model/RunState.js";
 import type { SensorPositionSource } from "../model/SensorPositionSource.js";
 import { SensorRange, type SensorRangeValue } from "../model/SensorRange.js";
 
@@ -39,6 +51,8 @@ const OFFSET_DECIMALS = 3;
 
 export type SensorOptionsPanelOptions = {
   readonly source: SensorPositionSource;
+  /** The recording's lifecycle; adjustments that would step the trace are locked while it records. */
+  readonly runStateProperty: TReadOnlyProperty<RunStateValue>;
   /** Where the range combo box's popup goes, above everything else. */
   readonly listParent: Node;
 };
@@ -57,8 +71,21 @@ export class SensorOptionsPanel extends MotionSensorPanel {
     const source = providedOptions.source;
     const strings = StringManager.getInstance().getSensorOptionsStrings();
 
-    const createCheckbox = (property: BooleanProperty, label: Text): Checkbox =>
-      new Checkbox(property, label, { ...SIM_CHECKBOX_OPTIONS, accessibleName: label.stringProperty });
+    const isIdleProperty = new DerivedProperty(
+      [providedOptions.runStateProperty],
+      (state) => state !== RunState.RECORDING,
+    );
+
+    const createCheckbox = (
+      property: BooleanProperty,
+      label: Text,
+      enabledProperty?: TReadOnlyProperty<boolean>,
+    ): Checkbox =>
+      new Checkbox(property, label, {
+        ...SIM_CHECKBOX_OPTIONS,
+        accessibleName: label.stringProperty,
+        ...(enabledProperty ? { enabledProperty: enabledProperty } : {}),
+      });
 
     const changeSignCheckbox = createCheckbox(
       source.changeSignProperty,
@@ -67,6 +94,7 @@ export class SensorOptionsPanel extends MotionSensorPanel {
         fill: MotionSensorColors.textColorProperty,
         maxWidth: CONTROL_PANEL_WIDTH - 60,
       }),
+      isIdleProperty,
     );
     const zeroAtStartCheckbox = createCheckbox(
       source.zeroAtStartProperty,
@@ -79,6 +107,10 @@ export class SensorOptionsPanel extends MotionSensorPanel {
 
     // Zeroing needs a reading to zero *to*, so it waits for a connection. The
     // source takes a one-shot reading of its own when nothing is being recorded.
+    const canZeroNowProperty = new DerivedProperty(
+      [source.isAvailableProperty, isIdleProperty],
+      (available, idle) => available && idle,
+    );
     const zeroNowButton = new RectangularPushButton({
       ...FLAT_PANEL_PUSH_BUTTON_OPTIONS,
       content: new Text(strings.zeroNowStringProperty, { font: BUTTON_FONT, fill: LIGHT_SURFACE_TEXT_FILL }),
@@ -89,16 +121,20 @@ export class SensorOptionsPanel extends MotionSensorPanel {
         source.zeroNow().catch(() => undefined);
       },
       accessibleName: strings.zeroNowStringProperty,
-      enabledProperty: source.isAvailableProperty,
+      enabledProperty: canZeroNowProperty,
     });
 
     const hasOffsetProperty = new DerivedProperty([source.zeroOffsetProperty], (offset) => offset !== 0);
+    const canRemoveZeroProperty = new DerivedProperty(
+      [hasOffsetProperty, isIdleProperty],
+      (hasOffset, idle) => hasOffset && idle,
+    );
     const removeZeroButton = new RectangularPushButton({
       ...FLAT_PANEL_PUSH_BUTTON_OPTIONS,
       content: new Text(strings.removeZeroStringProperty, { font: BUTTON_FONT, fill: LIGHT_SURFACE_TEXT_FILL }),
       listener: () => source.removeZeroOffset(),
       accessibleName: strings.removeZeroStringProperty,
-      enabledProperty: hasOffsetProperty,
+      enabledProperty: canRemoveZeroProperty,
     });
 
     // The offset is invisible in the reading itself — the same 0.4 m can mean
@@ -178,7 +214,19 @@ export class SensorOptionsPanel extends MotionSensorPanel {
     this.rangeComboBox = rangeComboBox;
 
     this.disposeSensorOptionsPanel = () => {
-      for (const disposable of [rangeComboBox, offsetProperty, offsetValueProperty, hasOffsetProperty]) {
+      // The controls first: they hold listeners on the Properties below.
+      for (const disposable of [
+        changeSignCheckbox,
+        zeroNowButton,
+        removeZeroButton,
+        rangeComboBox,
+        offsetProperty,
+        offsetValueProperty,
+        canRemoveZeroProperty,
+        hasOffsetProperty,
+        canZeroNowProperty,
+        isIdleProperty,
+      ]) {
         disposable.dispose();
       }
     };

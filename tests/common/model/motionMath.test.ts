@@ -3,7 +3,12 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { differentiate, estimateDerivative, type Sample } from "../../../src/common/model/motionMath.js";
+import {
+  differentiate,
+  differentiateTrailing,
+  estimateDerivative,
+  type Sample,
+} from "../../../src/common/model/motionMath.js";
 
 function ramp(slope: number, count: number, dt = 0.05): Sample[] {
   return Array.from({ length: count }, (_, i) => ({ time: i * dt, value: slope * i * dt }));
@@ -68,5 +73,34 @@ describe("differentiate", () => {
         expect(sample.value).toBeCloseTo(2 * sample.time, 2);
       }
     }
+  });
+});
+
+describe("differentiateTrailing", () => {
+  it("reads 0 until a full window lies behind the sample, then recovers the slope", () => {
+    const velocity = differentiateTrailing(ramp(2, 10), 4);
+    expect(velocity.slice(0, 3).map((s) => s.value)).toEqual([0, 0, 0]);
+    for (const { value } of velocity.slice(3)) {
+      expect(value).toBeCloseTo(2, 8);
+    }
+  });
+
+  it("never fits a line through fewer points than the window", () => {
+    // One stale first reading, then a student standing still: a two-point
+    // slope would report a huge velocity at the second sample.
+    const input: Sample[] = [{ time: 0, value: 1.2 }, ...ramp(0, 5).slice(1)];
+    expect(differentiateTrailing(input, 4)[1]?.value).toBe(0);
+  });
+
+  it("waits for the previous stage to fill before its own window counts", () => {
+    const velocity = differentiateTrailing(ramp(2, 10), 3, 2);
+    // Window [start, index] must start at or after index 2, so index 4 is first.
+    expect(velocity.slice(0, 4).map((s) => s.value)).toEqual([0, 0, 0, 0]);
+    expect(velocity[4]?.value).toBeCloseTo(2, 8);
+  });
+
+  it("keeps the sample times of the input", () => {
+    const input = ramp(2, 6);
+    expect(differentiateTrailing(input, 3).map((s) => s.time)).toEqual(input.map((s) => s.time));
   });
 });

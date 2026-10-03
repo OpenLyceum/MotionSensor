@@ -96,10 +96,21 @@ already drawn, so the plot would rewrite its own past as the student watched it.
 The cost of a causal filter is a half-window of lag — about 0.1 s per stage —
 which is the honest price of a graph that only ever grows to the right.
 
-Near the start the window slides rather than shrinking, so every sample gets its
-slope from the same number of points; a shrinking window would make the first
-samples much noisier than the rest, which is exactly where a student's first
-push-off is.
+Near the start a trailing window cannot slide forward without ceasing to be
+causal, and it is not allowed to shrink either: a slope fitted through two points
+is wildly noisy, and the start is exactly where a student's first push-off is.
+So each stage reports a value only once its whole window lies over *fully
+formed* input from the stage before:
+
+| Stage | First defined at sample | At 20 Hz (window 4) |
+|---|---|---|
+| smoothed position | `w − 1` | 0.15 s |
+| velocity | `2(w − 1)` | 0.30 s |
+| acceleration | `3(w − 1)` | 0.45 s |
+
+Waiting for the smoothing to fill matters as much as waiting for the derivative:
+a mean over fewer points lags a ramp by a varying amount, and a velocity taken
+across those partial means reads half the true speed.
 
 ### Why velocity is not read from the device
 
@@ -117,8 +128,8 @@ ragged next to position. That is a true statement about differentiating real
 measurements, not a defect to be smoothed away — widening the window would buy
 smoothness with lag, and hide the turnarounds the activity is about.
 
-Velocity and acceleration read 0 until their windows have filled, rather than
-reporting a slope from one or two points.
+Velocity and acceleration read 0 until their windows have filled (the table
+above), rather than reporting a slope from one or two points.
 
 ## Hardware
 
@@ -131,7 +142,22 @@ than it samples at every rate up to 20 Hz, so a fresh reading is waiting when th
 fixed clock takes one. At 50 Hz the link is the limit and some samples repeat the
 previous reading. Polling stops when the recording does, so the transducer is
 silent and the last position remains displayed. The connection stays open for
-another recording.
+another recording. Clearing a run does not start it again — only Record does.
+
+Because the sensor is silent between runs, its last value is wherever the student
+stood when the previous recording ended. The clock therefore does not start at
+the press of Record but at the **first reading of the new run**: that reading is
+t = 0, and with *zero at start* on it is also the reading the zero is taken from,
+so t = 0 is exactly 0 m. On the Simulation screen the walker is always current
+and t = 0 is taken at the press itself.
+
+If the sensor disconnects or stops answering mid-recording, the recording ends
+there. What was recorded stands; sampling the last reading for the rest of the
+minute would draw a student standing still who was never there. A poll that
+fails says so; a stream cannot, because there is no round trip left to fail, so
+a stream that has delivered samples and then falls silent for a second (or five
+sample periods, if longer) is treated as lost. A stream silent from the start
+is answered by polling instead.
 
 ### From echo time to published position
 
@@ -157,12 +183,17 @@ echo time ─▶ distance ─▶ range gate ─▶ − zero offset ─▶ × sig
 
 - **Zero offset** subtracts a captured distance, so displacement can be measured
   from wherever the student is standing. *Zero Sensor Now* takes a fresh one-shot
-  reading when nothing is being recorded, or uses the latest one when the poll
-  loop already owns the link; *zero at start* captures the first accepted reading
-  of each run.
+  reading; *zero at start* captures the first accepted reading of each run — a
+  reading the device has just sent, never the last one republished after an
+  adjustment, which is where the previous run ended.
 
 - **Change sign** negates what is left. Zeroing happens first, so an offset taken
   at 1.2 m still puts zero where the student stood once the axis is reversed.
+
+Change sign, Zero Sensor Now and Remove Offset are locked while recording. Each
+shifts every reading after it at once, which mid-run would put a step in the
+trace and a spike in velocity and acceleration that no one walked. Range and
+*zero at start* stay free: one filters echoes, the other only arms the next run.
 
 The track drawn on screen is **0–2 m**, a practical classroom walking distance,
 and the walker is clamped to it for drawing only: a sign-flipped or zeroed

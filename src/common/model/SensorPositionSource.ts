@@ -62,11 +62,17 @@ export const SensorTransport = {
 export type SensorTransportValue = (typeof SensorTransport)[keyof typeof SensorTransport];
 
 /**
- * How long a stream may say nothing before the recording gives up on it and
- * polls instead. Long enough to cover a slow first sample, short enough that a
- * short recording still gets a trace.
+ * How long a stream may say nothing before the recording gives up on it.
+ * Long enough to cover a slow first sample, short enough that a short
+ * recording still gets a trace.
  */
 const STREAM_SILENCE_TIMEOUT_MS = 1000;
+
+/**
+ * Sample periods of silence tolerated, so a period raised with
+ * `?pollIntervalMs=` is not mistaken for a dead stream.
+ */
+const STREAM_SILENCE_PERIODS = 5;
 
 export type SensorPositionSourceOptions = {
   /**
@@ -156,11 +162,15 @@ export class SensorPositionSource implements TPositionSource {
   /** Set by {@link startSampling} when zero-at-start is on; the next accepted reading consumes it. */
   private zeroOnNextReading = false;
 
+  /** Whether a reading has been published since {@link startSampling}. */
+  private freshReading = false;
+
   private pollTimerId: ReturnType<typeof setInterval> | null = null;
   private isPolling = false;
   private isStreaming = false;
   /** Whether a recording has asked for readings, whichever mechanism is serving it. */
   private samplingRequested = false;
+  /** Restarted by every pushed sample; fires only after a stream has gone quiet. */
   private streamWatchdogId: ReturnType<typeof setTimeout> | null = null;
   private samplesSinceStreamStart = 0;
   /** Invalidates an asynchronous read if sampling stops while it is in flight. */
@@ -195,7 +205,7 @@ export class SensorPositionSource implements TPositionSource {
     // and polling only runs during a recording, so there may not be a next one.
     this.republishAdjusted = () => {
       if (this.lastRawDistanceM !== null) {
-        this.publishDistance(this.lastRawDistanceM);
+        this.publishDistance(this.lastRawDistanceM, false);
       }
     };
     this.changeSignProperty.lazyLink(this.republishAdjusted);
@@ -295,9 +305,11 @@ export class SensorPositionSource implements TPositionSource {
       return;
     }
     this.samplingRequested = true;
+    this.freshReading = false;
     // Zero-at-start is armed rather than applied: the offset is whatever the
     // *first accepted reading* of this run turns out to be, which is where the
-    // student was standing when they pressed Record.
+    // student was standing when they pressed Record. Only a reading from the
+    // device consumes it — see publishDistance.
     this.zeroOnNextReading = this.zeroAtStartProperty.value;
     this.diagnosticsStartTimeMs = performance.now();
 
@@ -308,19 +320,7 @@ export class SensorPositionSource implements TPositionSource {
     if (this.streamingEnabled && device?.startStreaming) {
       this.isStreaming = true;
       this.samplesSinceStreamStart = 0;
-      // A device can accept the start command and then push nothing — the one
-      // failure a stream cannot report, because there is no round trip left to
-      // fail. Without this the recording would be flat and say why nowhere, so
-      // silence is given a deadline and answered by polling.
-      this.streamWatchdogId = setTimeout(() => {
-        this.streamWatchdogId = null;
-        if (this.samplingRequested && this.isStreaming && this.samplesSinceStreamStart === 0) {
-          this.diagnosticsProperty.value = "stream silent; polling instead";
-          this.isStreaming = false;
-          device.stopStreaming?.().catch(() => undefined);
-          this.startPolling();
-        }
-      }, STREAM_SILENCE_TIMEOUT_MS);
+      this.armStreamWatchdog();
       device
         .startStreaming(this.pollIntervalMs, (echoTimeMicroseconds) => {
           this.acceptReading(echoTimeMicroseconds);
@@ -342,6 +342,48 @@ export class SensorPositionSource implements TPositionSource {
     this.startPolling();
   }
 
+  /**
+   * (Re)starts the stream's silence deadline.
+   *
+   * Silence is the one failure a stream cannot report, because there is no
+   * round trip left to fail — a device can accept the start command and push
+   * nothing, and a transport's read loop can give up mid-run without anyone
+   * hearing of it. Without a deadline either would record a flat line and say
+   * why nowhere. Silence before the first sample is answered by polling, since
+   * a device that will not stream may still answer single reads; silence after
+   * samples have arrived means the link was lost, and is treated exactly like a
+   * poll that keeps failing, which ends the recording where the data stops.
+   */
+  private armStreamWatchdog(): void {
+    if (this.streamWatchdogId !== null) {
+      clearTimeout(this.streamWatchdogId);
+    }
+    const device = this.device;
+    const timeoutMs = Math.max(STREAM_SILENCE_TIMEOUT_MS, STREAM_SILENCE_PERIODS * this.pollIntervalMs);
+    this.streamWatchdogId = setTimeout(() => {
+      this.streamWatchdogId = null;
+      if (!(this.samplingRequested && this.isStreaming) || device !== this.device) {
+        return;
+      }
+      if (this.samplesSinceStreamStart === 0) {
+        this.diagnosticsProperty.value = "stream silent; polling instead";
+        this.isStreaming = false;
+        device?.stopStreaming?.().catch(() => undefined);
+        this.startPolling();
+        return;
+      }
+      this.failSampling("stream stopped");
+    }, timeoutMs);
+  }
+
+  /** Gives up on a link that has stopped answering mid-recording. */
+  private failSampling(message: string): void {
+    this.stopSampling();
+    this.availableProperty.value = false;
+    this.connectionStateProperty.value = ConnectionState.ERROR;
+    this.errorMessageProperty.value = message;
+  }
+
   private startPolling(): void {
     if (this.pollTimerId !== null) {
       return;
@@ -353,10 +395,15 @@ export class SensorPositionSource implements TPositionSource {
     }, this.pollIntervalMs);
   }
 
+  public hasFreshReading(): boolean {
+    return this.freshReading;
+  }
+
   public stopSampling(): void {
     this.samplingRequested = false;
     this.pollingGeneration += 1;
     this.zeroOnNextReading = false;
+    this.freshReading = false;
     if (this.streamWatchdogId !== null) {
       clearTimeout(this.streamWatchdogId);
       this.streamWatchdogId = null;
@@ -402,10 +449,7 @@ export class SensorPositionSource implements TPositionSource {
         console.warn("[MotionSensor sensor] read failed", error, device.diagnosticText ?? "");
       }
       if (this.consecutiveFailures >= MAXIMUM_CONSECUTIVE_FAILURES) {
-        this.stopSampling();
-        this.availableProperty.value = false;
-        this.connectionStateProperty.value = ConnectionState.ERROR;
-        this.errorMessageProperty.value = error instanceof Error ? error.message : String(error);
+        this.failSampling(error instanceof Error ? error.message : String(error));
       }
     } finally {
       this.isPolling = false;
@@ -429,7 +473,12 @@ export class SensorPositionSource implements TPositionSource {
 
     this.consecutiveFailures = 0;
     this.samplesSinceStreamStart += 1;
-    this.publishDistance(metres);
+    if (this.isStreaming && this.samplingRequested) {
+      this.armStreamWatchdog();
+    }
+    if (this.publishDistance(metres, true) && this.samplingRequested) {
+      this.freshReading = true;
+    }
   }
 
   /**
@@ -473,13 +522,20 @@ export class SensorPositionSource implements TPositionSource {
    * A reading outside the range is *dropped*, not clamped: it is an echo off
    * something that is not the target, and holding the previous position is less
    * of a lie than pinning the walker to the end of the track.
+   *
+   * @param isNewReading - true for a reading just taken from the device; false
+   *   when republishing the last one after an adjustment. Only a new reading
+   *   may consume an armed zero-at-start: the last one is wherever the student
+   *   stood when the previous run ended, and zeroing on it would put this
+   *   run's t = 0 somewhere other than 0 m.
+   * @returns whether the reading was in range and published
    */
-  private publishDistance(metres: number): void {
+  private publishDistance(metres: number, isNewReading: boolean): boolean {
     if (!isEchoInRange(metres, this.rangeProperty.value)) {
-      return;
+      return false;
     }
     this.lastRawDistanceM = metres;
-    if (this.zeroOnNextReading) {
+    if (isNewReading && this.zeroOnNextReading) {
       this.zeroOnNextReading = false;
       this.zeroOffsetProperty.value = metres;
     }
@@ -488,6 +544,7 @@ export class SensorPositionSource implements TPositionSource {
       changeSign: this.changeSignProperty.value,
     });
     this.sensorPositionProperty.value = SENSOR_REPORTED_RANGE_M.constrainValue(adjusted);
+    return true;
   }
 
   /**

@@ -95,6 +95,7 @@ Vitest on `happy-dom` with the template `tests/setup.ts`; tests live only under 
 |---|---|
 | `tests/common/model/MotionSensorModel.test.ts` | unit tests |
 | `tests/common/model/motionMath.test.ts` | unit tests |
+| `tests/common/model/SensorPositionSource.test.ts` | stream-silence watchdog, zero at start — against a mocked USB device |
 | `tests/common/model/sensorMeasurement.test.ts` | unit tests |
 | `tests/common/view/dataTableCsv.test.ts` | unit tests |
 | `tests/memory-leak.test.ts` | `describeDisposalLeaks` over the sim's disposables (shared harness `tests/helpers/memoryLeak.ts`) |
@@ -147,6 +148,10 @@ check that constructs both screens in a real browser.
   hand.
 - **`connect()` never rejects.** Outcomes land on Properties. A dismissed picker
   throws `DeviceSelectionCancelled` internally and is not shown as an error.
+- **Only `startRecording()` starts the source sampling**, and t = 0 waits for
+  `source.hasFreshReading()` — a sensor is silent between runs, so its last
+  value is stale. Don't move `startSampling()` back into `resetRecording()`:
+  Clear would set the sensor ranging with nothing recording.
 - **Never accumulate recording time in a float.** Sample times are
   `index × period`; tests pin it.
 - **The sample rate is a student's choice, captured at Record.** Never read

@@ -47,6 +47,14 @@ export type TPositionSource = {
   stopSampling(): void;
 
   /**
+   * Whether {@link positionProperty} holds a reading taken since the last
+   * {@link startSampling}. A recording's t = 0 waits for this: a hardware
+   * source is silent between runs, so its last value is wherever the student
+   * stood when the previous run ended. The pointer source is always current.
+   */
+  hasFreshReading(): boolean;
+
+  /**
    * Advances a source that runs on the sim's clock. Hardware sources ignore it
    * because their acquisition is controlled by startSampling/stopSampling.
    */

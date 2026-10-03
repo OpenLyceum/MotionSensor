@@ -232,7 +232,11 @@ export class MotionSensorScreenView extends ScreenView {
     const sensorOptionsPanel =
       sensorSource === undefined
         ? null
-        : new SensorOptionsPanel({ source: sensorSource, listParent: comboBoxListParent });
+        : new SensorOptionsPanel({
+            source: sensorSource,
+            runStateProperty: model.runStateProperty,
+            listParent: comboBoxListParent,
+          });
 
     const controlColumn = new VBox({
       align: "left",
