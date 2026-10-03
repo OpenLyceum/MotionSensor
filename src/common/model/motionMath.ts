@@ -69,10 +69,21 @@ export function differentiate(samples: readonly Sample[], windowSize: number): S
   });
 }
 
-/** Causal derivative: each slope uses only the current and preceding samples. */
-export function differentiateTrailing(samples: readonly Sample[], windowSize: number): Sample[] {
+/**
+ * Causal derivative: each slope uses only the current and preceding samples.
+ *
+ * A slope is reported only once a full `windowSize` of *defined* input lies
+ * behind it — inputs before `firstDefinedIndex` are a previous stage still
+ * filling its own window. Until then the value is 0. A window that shrank at
+ * the start instead would fit a line through two points, and a start-up is
+ * exactly where one stale or zeroed reading makes that slope enormous.
+ */
+export function differentiateTrailing(samples: readonly Sample[], windowSize: number, firstDefinedIndex = 0): Sample[] {
   return samples.map((sample, index) => {
-    const start = Math.max(0, index - windowSize + 1);
+    const start = index - windowSize + 1;
+    if (start < firstDefinedIndex) {
+      return { time: sample.time, value: 0 };
+    }
     return { time: sample.time, value: estimateDerivative(samples.slice(start, index + 1)) };
   });
 }

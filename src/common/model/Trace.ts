@@ -92,10 +92,22 @@ export class Trace {
     return this.smoothedSamples;
   }
 
-  /** The causal velocity series, recomputed lazily from finalized values. */
+  /**
+   * The causal velocity series, recomputed lazily from finalized values.
+   *
+   * Each stage waits for the one before it: a smoothed value is a full mean
+   * only from sample `windowSamples - 1` on (earlier ones average fewer points,
+   * which lags a ramp by a varying amount and would halve its slope), so
+   * velocity is defined from one window after that, and acceleration from one
+   * window after velocity. Before then each reads 0.
+   */
   public getVelocitySamples(): readonly Sample[] {
     if (this.velocityCache === null) {
-      this.velocityCache = differentiateTrailing(this.getSmoothedPositionSamples(), this.windowSamples);
+      this.velocityCache = differentiateTrailing(
+        this.getSmoothedPositionSamples(),
+        this.windowSamples,
+        this.windowSamples - 1,
+      );
     }
     return this.velocityCache;
   }
@@ -107,7 +119,11 @@ export class Trace {
    */
   public getAccelerationSamples(): readonly Sample[] {
     if (this.accelerationCache === null) {
-      this.accelerationCache = differentiateTrailing(this.getVelocitySamples(), this.windowSamples);
+      this.accelerationCache = differentiateTrailing(
+        this.getVelocitySamples(),
+        this.windowSamples,
+        2 * (this.windowSamples - 1),
+      );
     }
     return this.accelerationCache;
   }

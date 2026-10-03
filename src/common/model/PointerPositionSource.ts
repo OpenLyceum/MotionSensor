@@ -52,6 +52,11 @@ export class PointerPositionSource implements TPositionSource {
     // Pointer position requires no acquisition to stop.
   }
 
+  /** Always: the walker is wherever the pointer last put it, right now. */
+  public hasFreshReading(): boolean {
+    return true;
+  }
+
   /** No-op: the walker moves only when the student moves it. */
   public step(_dt: number): void {
     // intentionally empty
