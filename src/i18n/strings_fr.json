@@ -19,7 +19,8 @@
     "sampleRate": "Fréquence d'échantillonnage",
     "sampleRatePattern": "{{rate}} Hz",
     "elapsedPattern": "{{time}} s",
-    "connectFirst": "Connectez un capteur pour enregistrer"
+    "connectFirst": "Connectez un capteur pour enregistrer",
+    "waitingForReading": "En attente de la première mesure du capteur. Placez-vous devant lui, à au moins 15 cm."
   },
   "graph": {
     "vs": "selon",

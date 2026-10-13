@@ -11,6 +11,7 @@
 import { BooleanProperty, NumberProperty, type TReadOnlyProperty } from "scenerystack/axon";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MotionSensorModel } from "../../../src/common/model/MotionSensorModel.js";
+import { differentiateTrailing, type Sample } from "../../../src/common/model/motionMath.js";
 import { PointerPositionSource } from "../../../src/common/model/PointerPositionSource.js";
 import { PositionSourceType, type TPositionSource } from "../../../src/common/model/PositionSource.js";
 import { RunState } from "../../../src/common/model/RunState.js";
@@ -20,6 +21,7 @@ import {
   DEFAULT_SAMPLE_RATE_HZ,
   MAX_RECORD_DURATION_S,
   SAMPLE_RATE_CHOICES_HZ,
+  windowSamplesForRate,
 } from "../../../src/MotionSensorConstants.js";
 
 /**
@@ -405,11 +407,35 @@ describe("MotionSensorModel with a hardware source", () => {
     expect(model.getPositionSamples()).toHaveLength(recorded);
   });
 
-  it("stops a recording that was still waiting for its first reading when the sensor goes away", () => {
+  it("ends a recording that was still waiting for its first reading when the sensor goes away", () => {
     model.startRecording();
     source.availableProperty.value = false;
-    expect(model.runStateProperty.value).toBe(RunState.STOPPED);
+    // Nothing was recorded, so there is no trace to look at: back to READY.
+    expect(model.runStateProperty.value).toBe(RunState.READY);
+    expect(model.awaitingFirstReadingProperty.value).toBe(false);
     expect(model.getPositionSamples()).toHaveLength(0);
+  });
+
+  it("says it is waiting from Record until the first reading", () => {
+    expect(model.awaitingFirstReadingProperty.value).toBe(false);
+    model.startRecording();
+    advance(model, 0.5);
+    expect(model.awaitingFirstReadingProperty.value).toBe(true);
+
+    source.deliver(1);
+    model.step(DEFAULT_SAMPLE_PERIOD_S);
+    expect(model.awaitingFirstReadingProperty.value).toBe(false);
+  });
+
+  it("returns to READY when Stop is pressed before any reading arrived", () => {
+    // A student standing out of range gives the sensor nothing to answer with.
+    model.startRecording();
+    advance(model, 2);
+    model.stopRecording();
+    expect(model.runStateProperty.value).toBe(RunState.READY);
+    expect(model.awaitingFirstReadingProperty.value).toBe(false);
+    expect(source.isSampling).toBe(false);
+    expect(model.canRecordProperty.value).toBe(true);
   });
 
   it("survives being disposed twice", () => {
@@ -435,6 +461,39 @@ describe("Trace start-up", () => {
     // -12 m/s and -240 m/s^2 a shrinking window used to report at index 1.
     expect(velocity.slice(0, 6)).toEqual([0, 0, 0, 0, 0, 0]);
     expect(acceleration.slice(0, 9)).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  });
+
+  it("builds the same series sample by sample as a full pass over the recording", () => {
+    const trace = new Trace();
+    trace.setSampleRate(50);
+    const positions: Sample[] = [];
+    for (let index = 0; index < 400; index++) {
+      const time = index * 0.02;
+      // A walk with a turnaround and some sensor-like jitter.
+      const position = 1 + 0.6 * Math.sin(1.3 * time) + 0.004 * Math.sin(97 * index);
+      trace.add(time, position);
+      positions.push({ time: time, value: position });
+    }
+    const window = windowSamplesForRate(50);
+    const smoothed = trace.getSmoothedPositionSamples();
+    const velocity = differentiateTrailing(smoothed, window, window - 1);
+    const acceleration = differentiateTrailing(velocity, window, 2 * (window - 1));
+    expect(trace.getPositionSamples()).toEqual(positions);
+    expect(trace.getVelocitySamples()).toEqual(velocity);
+    expect(trace.getAccelerationSamples()).toEqual(acceleration);
+  });
+
+  it("re-derives what it holds when its rate changes", () => {
+    const trace = new Trace();
+    trace.setSampleRate(20);
+    for (let index = 0; index < 20; index++) {
+      trace.add(index * 0.1, 0.3 * index * 0.1);
+    }
+    trace.setSampleRate(10);
+    const window = windowSamplesForRate(10);
+    expect(trace.getVelocitySamples()).toEqual(
+      differentiateTrailing(trace.getSmoothedPositionSamples(), window, window - 1),
+    );
   });
 
   it("reads a steady walk at its true speed from the first defined sample", () => {

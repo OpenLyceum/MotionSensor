@@ -153,6 +153,16 @@ describe("SensorPositionSource", () => {
     });
   });
 
+  describe("a probed device", () => {
+    it("is connected but not offered for recording, which it could never feed", async () => {
+      const source = new SensorPositionSource({ usbProbeOnly: true });
+      await source.connect(SensorTransport.USB);
+      expect(source.connectionStateProperty.value).toBe(ConnectionState.CONNECTED);
+      expect(source.isAvailableProperty.value).toBe(false);
+      source.dispose();
+    });
+  });
+
   describe("zero at start", () => {
     it("zeroes on the run's first reading, not on a republished stale one", async () => {
       const { source, device } = await connectedSource();

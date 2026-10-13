@@ -19,7 +19,8 @@
     "sampleRate": "Frecuencia de muestreo",
     "sampleRatePattern": "{{rate}} Hz",
     "elapsedPattern": "{{time}} s",
-    "connectFirst": "Conecta un sensor para grabar"
+    "connectFirst": "Conecta un sensor para grabar",
+    "waitingForReading": "Esperando la primera lectura del sensor. Colócate frente a él, al menos a 15 cm."
   },
   "graph": {
     "vs": "frente a",
