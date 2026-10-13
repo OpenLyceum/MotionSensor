@@ -151,6 +151,12 @@ t = 0, and with *zero at start* on it is also the reading the zero is taken from
 so t = 0 is exactly 0 m. On the Simulation screen the walker is always current
 and t = 0 is taken at the press itself.
 
+The wait is not always short. A sensor with nothing within range to echo off
+answers nothing usable, and its readings are dropped by the range gate, so the
+record control says that it is waiting for the first reading and where to
+stand, and a screen reader hears the same sentence. Pressing Stop before any
+reading arrived returns to Ready rather than to an empty Stopped run.
+
 If the sensor disconnects or stops answering mid-recording, the recording ends
 there. What was recorded stands; sampling the last reading for the rest of the
 minute would draw a student standing still who was never there. A poll that

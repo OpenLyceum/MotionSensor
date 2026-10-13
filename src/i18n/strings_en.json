@@ -19,7 +19,8 @@
     "sampleRate": "Sample rate",
     "sampleRatePattern": "{{rate}} Hz",
     "elapsedPattern": "{{time}} s",
-    "connectFirst": "Connect a sensor to record"
+    "connectFirst": "Connect a sensor to record",
+    "waitingForReading": "Waiting for the sensor's first reading. Stand in front of it, at least 15 cm away."
   },
   "graph": {
     "vs": "vs",

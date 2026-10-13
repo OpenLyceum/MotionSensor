@@ -102,6 +102,18 @@ export class MotionSensorModel implements TModel {
   /** Whether recording can begin right now. */
   public readonly canRecordProperty: TReadOnlyProperty<boolean>;
 
+  /**
+   * True from Record until the source has a reading taken for this run. The
+   * clock does not start until then: t = 0 is where the student stood when the
+   * recording began, not where a silent sensor last saw them.
+   *
+   * Public because the wait is not always short: a sensor with nothing in range
+   * to echo off answers nothing usable, and a recording that sits at 0.0 s
+   * without saying why looks broken. The view says what it is waiting for.
+   */
+  public readonly awaitingFirstReadingProperty: TReadOnlyProperty<boolean>;
+  private readonly awaitingProperty: BooleanProperty;
+
   private readonly trace: Trace;
 
   /** Leftover time not yet consumed by a whole sample period. */
@@ -120,13 +132,6 @@ export class MotionSensorModel implements TModel {
 
   /** How many samples the current recording holds. Integer, never derived from a float. */
   private sampleIndex = 0;
-
-  /**
-   * True from Record until the source has a reading taken for this run. The
-   * clock does not start until then: t = 0 is where the student stood when the
-   * recording began, not where a silent sensor last saw them.
-   */
-  private awaitingFirstReading = false;
 
   /** Mirrors the source onto positionProperty while idle, so the graph is live before Record. */
   private readonly sourcePositionListener: (position: number) => void;
@@ -154,6 +159,8 @@ export class MotionSensorModel implements TModel {
     this.accelerationProperty = new NumberProperty(0, { units: "m/s^2" });
     this.sampleEmitter = new Emitter();
     this.traceChangedProperty = new BooleanProperty(false);
+    this.awaitingProperty = new BooleanProperty(false);
+    this.awaitingFirstReadingProperty = this.awaitingProperty;
 
     this.canRecordProperty = new DerivedProperty(
       [this.runStateProperty, this.source.isAvailableProperty],
@@ -166,7 +173,7 @@ export class MotionSensorModel implements TModel {
     // value instead, so that the value the graph samples is the one that went
     // into the trace.
     this.sourcePositionListener = (position: number) => {
-      if (this.runStateProperty.value !== RunState.RECORDING || this.awaitingFirstReading) {
+      if (this.runStateProperty.value !== RunState.RECORDING || this.awaitingProperty.value) {
         this.positionProperty.value = position;
       }
     };
@@ -223,24 +230,29 @@ export class MotionSensorModel implements TModel {
     }
     this.resetRecording();
     this.source.startSampling();
-    this.runStateProperty.value = RunState.RECORDING;
 
     // t = 0 is a real sample, not an empty origin: the graph should show a point
     // the instant recording starts rather than a period later. A source that
     // has nothing current yet — a sensor between runs — gets it on the first
-    // step after its first reading instead.
-    this.awaitingFirstReading = true;
+    // step after its first reading instead. Set before the run state, so that
+    // anything listening for RECORDING already sees whether it is waiting.
+    this.awaitingProperty.value = true;
+    this.runStateProperty.value = RunState.RECORDING;
     this.recordFirstSampleIfReady();
   }
 
-  /** Ends recording early. The trace stands. */
+  /**
+   * Ends recording early. The trace stands — unless there is none, because the
+   * source never gave a first reading, in which case there is nothing to look
+   * at and the run returns to READY rather than to an empty STOPPED.
+   */
   public stopRecording(): void {
     if (this.runStateProperty.value !== RunState.RECORDING) {
       return;
     }
     this.source.stopSampling();
-    this.awaitingFirstReading = false;
-    this.runStateProperty.value = RunState.STOPPED;
+    this.awaitingProperty.value = false;
+    this.runStateProperty.value = this.trace.isEmpty ? RunState.READY : RunState.STOPPED;
     this.traceChangedProperty.value = !this.traceChangedProperty.value;
   }
 
@@ -262,7 +274,7 @@ export class MotionSensorModel implements TModel {
     this.source.step(clampedDt);
 
     // The clock starts at the first reading; until then there is no time to keep.
-    if (this.awaitingFirstReading) {
+    if (this.awaitingProperty.value) {
       this.recordFirstSampleIfReady();
       return;
     }
@@ -294,8 +306,8 @@ export class MotionSensorModel implements TModel {
 
   /** Takes the t = 0 sample once the source has a reading for this run. */
   private recordFirstSampleIfReady(): void {
-    if (this.awaitingFirstReading && this.source.hasFreshReading()) {
-      this.awaitingFirstReading = false;
+    if (this.awaitingProperty.value && this.source.hasFreshReading()) {
+      this.awaitingProperty.value = false;
       this.recordSample();
       this.traceChangedProperty.value = !this.traceChangedProperty.value;
     }
@@ -332,7 +344,7 @@ export class MotionSensorModel implements TModel {
    */
   private resetRecording(): void {
     this.source.stopSampling();
-    this.awaitingFirstReading = false;
+    this.awaitingProperty.value = false;
     const sampleRate = this.sampleRateProperty.value;
     this.samplePeriod = 1 / sampleRate;
     this.maximumSamples = Math.round(MAX_RECORD_DURATION_S * sampleRate);
@@ -367,6 +379,7 @@ export class MotionSensorModel implements TModel {
     this.accelerationProperty.dispose();
     this.sampleEmitter.dispose();
     this.traceChangedProperty.dispose();
+    this.awaitingProperty.dispose();
     this.source.stopSampling();
     this.source.dispose();
   }

@@ -12,7 +12,7 @@
 
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { DerivedProperty, PatternStringProperty } from "scenerystack/axon";
-import type { ScreenA11yStrings } from "../../i18n/StringManager.js";
+import { type ScreenA11yStrings, StringManager } from "../../i18n/StringManager.js";
 import type { MotionSensorModel } from "../model/MotionSensorModel.js";
 import { PositionSourceType } from "../model/PositionSource.js";
 import { RunState } from "../model/RunState.js";
@@ -37,13 +37,16 @@ export function createCurrentDetailsProperty(model: MotionSensorModel, a11y: Scr
   const property = new DerivedProperty(
     [
       model.runStateProperty,
+      model.awaitingFirstReadingProperty,
       model.source.isAvailableProperty,
       a11y.currentDetails.readyStringProperty,
       recordingProperty,
       stoppedProperty,
       a11y.currentDetails.waitingForSensorStringProperty,
+      // The visible message is already a whole sentence, so it is spoken as is.
+      StringManager.getInstance().getRunStrings().waitingForReadingStringProperty,
     ],
-    (state, available, ready, recording, stopped, waiting) => {
+    (state, awaitingFirstReading, available, ready, recording, stopped, waiting, waitingForReading) => {
       // On the sensor screen, "ready to record" is untrue until something is
       // connected; say what is actually blocking instead.
       if (!available && model.sourceType === PositionSourceType.MOTION_SENSOR) {
@@ -51,7 +54,7 @@ export function createCurrentDetailsProperty(model: MotionSensorModel, a11y: Scr
       }
       switch (state) {
         case RunState.RECORDING:
-          return recording;
+          return awaitingFirstReading ? waitingForReading : recording;
         case RunState.STOPPED:
           return stopped;
         default:

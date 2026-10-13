@@ -272,7 +272,10 @@ export class SensorPositionSource implements TPositionSource {
     this.deviceNameProperty.value = device.name;
     this.measurementListProperty.value = POSITION_MEASUREMENT;
     this.connectionStateProperty.value = ConnectionState.CONNECTED;
-    this.availableProperty.value = true;
+    // A probed device is connected but never sampled (startSampling refuses),
+    // so it is not a source to record from: offering Record would start a run
+    // that waits for a first reading forever.
+    this.availableProperty.value = !this.usbProbeOnly;
     this.consecutiveFailures = 0;
     this.diagnosticsStartTimeMs = performance.now();
 

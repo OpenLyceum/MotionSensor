@@ -207,7 +207,7 @@ devices that reject it.
 | `?showDiagnostics=` | false | Show the device's measurement list and raw readings |
 | `?pollIntervalMs=` | 40 | Sensor sample period (poll or stream); raise it when debugging a flaky link |
 | `?sensorStreaming=` | true | `false` forces polling on a transport that could stream (USB) |
-| `?usbBringUp=` | off | `probe` claims a USB device and reports its descriptors without sending anything; `all` drops the vendor filter; `probeAll` does both |
+| `?usbBringUp=` | off | `probe` claims a USB device and reports its descriptors without sending anything, so Record stays disabled; `all` drops the vendor filter; `probeAll` does both |
 
 ## Testing
 

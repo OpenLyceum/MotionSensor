@@ -18,14 +18,24 @@ export type Sample = {
  * avoids a division by zero at the ends of a trace.
  */
 export function estimateDerivative(points: readonly Sample[]): number {
-  const n = points.length;
+  return slopeOverRange(points, 0, points.length);
+}
+
+/**
+ * {@link estimateDerivative} over `points[start, end)`, without copying the
+ * range out first — the trailing derivative runs once per recorded sample, and
+ * a slice per call is garbage the collector has to chase at 50 Hz.
+ */
+function slopeOverRange(points: readonly Sample[], start: number, end: number): number {
+  const n = end - start;
   if (n < 2) {
     return 0;
   }
 
   let sumT = 0;
   let sumV = 0;
-  for (const point of points) {
+  for (let i = start; i < end; i++) {
+    const point = points[i] as Sample;
     sumT += point.time;
     sumV += point.value;
   }
@@ -34,7 +44,8 @@ export function estimateDerivative(points: readonly Sample[]): number {
 
   let numerator = 0;
   let denominator = 0;
-  for (const point of points) {
+  for (let i = start; i < end; i++) {
+    const point = points[i] as Sample;
     const dt = point.time - meanT;
     numerator += dt * (point.value - meanV);
     denominator += dt * dt;
@@ -79,11 +90,24 @@ export function differentiate(samples: readonly Sample[], windowSize: number): S
  * exactly where one stale or zeroed reading makes that slope enormous.
  */
 export function differentiateTrailing(samples: readonly Sample[], windowSize: number, firstDefinedIndex = 0): Sample[] {
-  return samples.map((sample, index) => {
-    const start = index - windowSize + 1;
-    if (start < firstDefinedIndex) {
-      return { time: sample.time, value: 0 };
-    }
-    return { time: sample.time, value: estimateDerivative(samples.slice(start, index + 1)) };
-  });
+  return samples.map((sample, index) => ({
+    time: sample.time,
+    value: trailingDerivativeAt(samples, index, windowSize, firstDefinedIndex),
+  }));
+}
+
+/**
+ * One value of {@link differentiateTrailing}: the slope at `index`. Because it
+ * reads only `samples[index - windowSize + 1 .. index]`, a series can be
+ * extended one sample at a time and every earlier value stays exactly as it
+ * was — which is what lets the trace append instead of recomputing.
+ */
+export function trailingDerivativeAt(
+  samples: readonly Sample[],
+  index: number,
+  windowSize: number,
+  firstDefinedIndex = 0,
+): number {
+  const start = index - windowSize + 1;
+  return start < firstDefinedIndex ? 0 : slopeOverRange(samples, start, index + 1);
 }

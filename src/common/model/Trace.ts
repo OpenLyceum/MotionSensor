@@ -19,7 +19,7 @@
  */
 
 import { DEFAULT_SAMPLE_RATE_HZ, windowSamplesForRate } from "../../MotionSensorConstants.js";
-import { differentiateTrailing, type Sample } from "./motionMath.js";
+import { type Sample, trailingDerivativeAt } from "./motionMath.js";
 
 export class Trace {
   /** Position samples, in metres, in recording order. */
@@ -33,42 +33,68 @@ export class Trace {
    */
   private windowSamples = windowSamplesForRate(DEFAULT_SAMPLE_RATE_HZ);
 
-  /** Cached velocity series; invalidated whenever a sample is added. */
-  private velocityCache: Sample[] | null = null;
-  /** Cached acceleration series; invalidated whenever a sample is added. */
-  private accelerationCache: Sample[] | null = null;
-  /** Causal smoothed values, finalized as each raw sample arrives. */
+  /**
+   * The derived series, each extended by one value per sample. Every stage is
+   * causal, so a value is final the moment it is computed: appending is exact,
+   * and costs one window's work per sample rather than a pass over the whole
+   * recording — which, at 50 Hz near the end of a minute, used to mean
+   * thousands of small arrays allocated per sample, twice.
+   */
   private smoothedSamples: Sample[] = [];
+  private velocitySamples: Sample[] = [];
+  private accelerationSamples: Sample[] = [];
 
   /**
-   * Sets the rate the next samples are recorded at. Only meaningful on an empty
-   * trace — call it from the model as a recording is being reset.
+   * Sets the rate the next samples are recorded at. Meant for an empty trace —
+   * the model calls it as a recording is being reset — but anything already
+   * recorded is re-derived at the new window rather than left inconsistent.
    */
   public setSampleRate(sampleRateHz: number): void {
     this.windowSamples = windowSamplesForRate(sampleRateHz);
-    this.velocityCache = null;
-    this.accelerationCache = null;
+    const recorded = this.samples;
+    this.clear();
+    for (const sample of recorded) {
+      this.add(sample.time, sample.value);
+    }
   }
 
-  /** Records one position sample. */
+  /**
+   * Records one position sample and extends each derived series by one value.
+   *
+   * Each stage waits for the one before it: a smoothed value is a full mean
+   * only from sample `windowSamples - 1` on (earlier ones average fewer points,
+   * which lags a ramp by a varying amount and would halve its slope), so
+   * velocity is defined from one window after that, and acceleration from one
+   * window after velocity. Before then each reads 0.
+   */
   public add(time: number, position: number): void {
     this.samples.push({ time: time, value: position });
-    const smoothingStart = Math.max(0, this.samples.length - this.windowSamples);
-    const smoothingWindow = this.samples.slice(smoothingStart);
-    this.smoothedSamples.push({
+    const index = this.samples.length - 1;
+    const window = this.windowSamples;
+
+    const smoothingStart = Math.max(0, index - window + 1);
+    let sum = 0;
+    for (let i = smoothingStart; i <= index; i++) {
+      sum += (this.samples[i] as Sample).value;
+    }
+    this.smoothedSamples.push({ time: time, value: sum / (index - smoothingStart + 1) });
+
+    this.velocitySamples.push({
       time: time,
-      value: smoothingWindow.reduce((sum, sample) => sum + sample.value, 0) / smoothingWindow.length,
+      value: trailingDerivativeAt(this.smoothedSamples, index, window, window - 1),
     });
-    this.velocityCache = null;
-    this.accelerationCache = null;
+    this.accelerationSamples.push({
+      time: time,
+      value: trailingDerivativeAt(this.velocitySamples, index, window, 2 * (window - 1)),
+    });
   }
 
   /** Discards the run. */
   public clear(): void {
     this.samples = [];
     this.smoothedSamples = [];
-    this.velocityCache = null;
-    this.accelerationCache = null;
+    this.velocitySamples = [];
+    this.accelerationSamples = [];
   }
 
   public get length(): number {
@@ -92,24 +118,9 @@ export class Trace {
     return this.smoothedSamples;
   }
 
-  /**
-   * The causal velocity series, recomputed lazily from finalized values.
-   *
-   * Each stage waits for the one before it: a smoothed value is a full mean
-   * only from sample `windowSamples - 1` on (earlier ones average fewer points,
-   * which lags a ramp by a varying amount and would halve its slope), so
-   * velocity is defined from one window after that, and acceleration from one
-   * window after velocity. Before then each reads 0.
-   */
+  /** The causal velocity series, differentiated from the smoothed position. */
   public getVelocitySamples(): readonly Sample[] {
-    if (this.velocityCache === null) {
-      this.velocityCache = differentiateTrailing(
-        this.getSmoothedPositionSamples(),
-        this.windowSamples,
-        this.windowSamples - 1,
-      );
-    }
-    return this.velocityCache;
+    return this.velocitySamples;
   }
 
   /**
@@ -118,14 +129,7 @@ export class Trace {
    * some distance the roughest of the three series — see doc/model.md.
    */
   public getAccelerationSamples(): readonly Sample[] {
-    if (this.accelerationCache === null) {
-      this.accelerationCache = differentiateTrailing(
-        this.getVelocitySamples(),
-        this.windowSamples,
-        2 * (this.windowSamples - 1),
-      );
-    }
-    return this.accelerationCache;
+    return this.accelerationSamples;
   }
 
   /** Value of the most recent sample in a series, or 0 before the first one. */

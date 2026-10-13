@@ -144,6 +144,17 @@ export class RecordControl extends MotionSensorPanel {
       lineWrap: CONTROL_PANEL_WIDTH - 40,
     });
 
+    // A recording's clock starts at the sensor's first reading, and a sensor
+    // with nothing in range to echo off never gives one. Without this the
+    // readout would sit at 0.0 s under a Stop button and look broken.
+    const waitingText = new RichText(runStrings.waitingForReadingStringProperty, {
+      font: MESSAGE_FONT,
+      fill: MotionSensorColors.textColorProperty,
+      visibleProperty: model.awaitingFirstReadingProperty,
+      align: "center",
+      lineWrap: CONTROL_PANEL_WIDTH - 40,
+    });
+
     super(
       new VBox({
         align: "center",
@@ -155,6 +166,7 @@ export class RecordControl extends MotionSensorPanel {
           new HBox({ spacing: 10, children: [recordButton, stopButton, clearButton] }),
           sampleRateRow,
           connectFirstText,
+          waitingText,
         ],
       }),
       { minWidth: CONTROL_PANEL_WIDTH },
