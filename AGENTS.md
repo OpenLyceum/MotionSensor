@@ -79,17 +79,7 @@ A11y strings live under the `a11y` key of each locale JSON, read through `String
 - Keyboard Shortcuts dialog: `src/common/view/MotionSensorKeyboardHelpContent.ts`
 - Keyboard-draggable objects: `src/common/view/PlayAreaNode.ts`, `src/common/view/graph/GraphInteractionHandler.ts`
 
-## Compliance carve-outs
-
-### `package.json` overrides
-
-Inherited from the template; rationale unchanged (`lodash`, `three`,
-`brace-expansion` pinned for advisories SceneryStack has not yet re-pinned).
-Dependabot ignores those three names.
-
 ## Testing
-
-Vitest on `happy-dom` with the template `tests/setup.ts`; tests live only under `tests/`.
 
 | Path | Covers |
 |---|---|
@@ -124,16 +114,9 @@ when debugging a flaky link. `?sensorStreaming=false` forces polling on a
 transport that would otherwise keep the device's own clock (USB does; Bluetooth
 cannot).
 
-## Commands
-
-```bash
-npm run lint && npm run check && npm run build && npm test
-```
-
-`npm run test:fuzz:quick` after any change to the sensor path — it is the only
-check that constructs both screens in a real browser.
-
 ## Development notes
+
+`npm run test:fuzz:quick` is the check that constructs both screens in a real browser. Run it after a change to the sensor path.
 
 ### Things that will bite
 
