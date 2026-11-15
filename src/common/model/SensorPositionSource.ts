@@ -44,11 +44,11 @@ import {
   SENSOR_REPORTED_RANGE_M,
 } from "../../MotionSensorConstants.js";
 import MotionSensorNamespace from "../../MotionSensorNamespace.js";
-import { BluetoothMotionSensor } from "../../sensor/model/BluetoothMotionSensor.js";
-import { DeviceSelectionCancelled, type TMotionSensorDevice } from "../../sensor/model/MotionSensorDevice.js";
-import { echoTimeToMetres } from "../../sensor/model/PascoMotionProtocol.js";
-import { UsbMotionSensor } from "../../sensor/model/UsbMotionSensor.js";
 import { ConnectionState, type ConnectionStateValue } from "./ConnectionState.js";
+import { BluetoothMotionSensor } from "./hardware/BluetoothMotionSensor.js";
+import { DeviceSelectionCancelled, type TMotionSensorDevice } from "./hardware/MotionSensorDevice.js";
+import { echoTimeToMetres } from "./hardware/PascoMotionProtocol.js";
+import { UsbMotionSensor } from "./hardware/UsbMotionSensor.js";
 import { PositionSourceType, type PositionSourceTypeValue, type TPositionSource } from "./PositionSource.js";
 import { SensorRange, type SensorRangeValue } from "./SensorRange.js";
 import { adjustReading, isEchoInRange } from "./sensorMeasurement.js";
