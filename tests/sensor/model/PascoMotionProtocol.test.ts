@@ -20,7 +20,7 @@ import {
   streamAckCommand,
   usbPacketBody,
   usbWriteFrame,
-} from "../../../src/sensor/model/PascoMotionProtocol.js";
+} from "../../../src/common/model/hardware/PascoMotionProtocol.js";
 
 const bytes = (buffer: ArrayBuffer): number[] => Array.from(new Uint8Array(buffer));
 

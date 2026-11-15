@@ -8,7 +8,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { UsbMotionSensor } from "../../../src/sensor/model/UsbMotionSensor.js";
+import { UsbMotionSensor } from "../../../src/common/model/hardware/UsbMotionSensor.js";
 
 const START_SAMPLING = 0x06;
 const STOP_SAMPLING = 0x07;

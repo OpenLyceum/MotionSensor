@@ -8,8 +8,8 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ConnectionState } from "../../../src/common/model/ConnectionState.js";
+import { SPEED_OF_SOUND_MPS } from "../../../src/common/model/hardware/PascoMotionProtocol.js";
 import { SensorPositionSource, SensorTransport } from "../../../src/common/model/SensorPositionSource.js";
-import { SPEED_OF_SOUND_MPS } from "../../../src/sensor/model/PascoMotionProtocol.js";
 
 /** The echo time the device would report for a target `metres` away. */
 function metresToEchoTime(metres: number): number {
@@ -75,7 +75,7 @@ const { FakeStreamingDevice } = vi.hoisted(() => {
 
 type FakeStreamingDevice = InstanceType<typeof FakeStreamingDevice>;
 
-vi.mock("../../../src/sensor/model/UsbMotionSensor.js", () => ({
+vi.mock("../../../src/common/model/hardware/UsbMotionSensor.js", () => ({
   UsbMotionSensor: FakeStreamingDevice,
 }));
 
