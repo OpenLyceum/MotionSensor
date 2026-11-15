@@ -46,10 +46,6 @@ export function getBluetoothStatus(): BluetoothStatusValue {
   return cachedStatus;
 }
 
-export function isBluetoothAvailable(): boolean {
-  return getBluetoothStatus() === BluetoothStatus.AVAILABLE;
-}
-
 let cachedUsbAvailable: boolean | null = null;
 
 /**
@@ -67,12 +63,6 @@ export function isWebUsbAvailable(): boolean {
   cachedUsbAvailable =
     typeof window !== "undefined" && typeof navigator !== "undefined" && window.isSecureContext && "usb" in navigator;
   return cachedUsbAvailable;
-}
-
-/** Clears the memos. Exists for unit tests, which vary the environment. */
-export function clearBluetoothStatusCache(): void {
-  cachedStatus = null;
-  cachedUsbAvailable = null;
 }
 
 MotionSensorNamespace.register("BluetoothStatus", BluetoothStatus);

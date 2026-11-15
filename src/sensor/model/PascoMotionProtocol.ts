@@ -15,7 +15,7 @@ export const PASCO_CHARACTERISTIC = {
 
 export const PASCO_DEVICE_SERVICE_ID = 0;
 export const MOTION_SENSOR_SERVICE_ID = 1;
-export const MOTION_SENSOR_SAMPLE_BYTES = 2;
+const MOTION_SENSOR_SAMPLE_BYTES = 2;
 export const MOTION_SENSOR_ADVERTISED_NAME = "Motion";
 export const SPEED_OF_SOUND_MPS = 344;
 
@@ -88,7 +88,7 @@ export const MOTION_SENSOR_OPTIONAL_SERVICE_UUIDS: readonly string[] = [
   MOTION_SENSOR_SERVICE_ID,
 ].map((serviceId) => pascoUuid(serviceId, PASCO_CHARACTERISTIC.SERVICE));
 
-export function toCommandBuffer(bytes: readonly number[]): ArrayBuffer {
+function toCommandBuffer(bytes: readonly number[]): ArrayBuffer {
   const buffer = new ArrayBuffer(bytes.length);
   new Uint8Array(buffer).set(bytes);
   return buffer;
@@ -210,7 +210,7 @@ export function decodeMotionNotification(data: Uint8Array): number | null {
 // written and the IN endpoint is simply read. No such frame is built here.
 
 /** One transfer cannot exceed 64 bytes, two of which are the header. */
-export const USB_MAXIMUM_PAYLOAD_BYTES = 62;
+const USB_MAXIMUM_PAYLOAD_BYTES = 62;
 
 /** `[service, characteristic, ...packet]` — a write to that characteristic. */
 export function usbWriteFrame(serviceId: number, characteristicId: number, packet: ArrayBuffer): ArrayBuffer {

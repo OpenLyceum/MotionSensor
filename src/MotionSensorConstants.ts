@@ -92,10 +92,10 @@ export const DEFAULT_SAMPLE_PERIOD_S = 1 / DEFAULT_SAMPLE_RATE_HZ;
  * enough to follow a real turnaround, long enough to suppress sensor jitter, and
  * the same physical smoothing at 5 Hz as at 50 Hz.
  */
-export const DERIVATIVE_WINDOW_S = 0.2;
+const DERIVATIVE_WINDOW_S = 0.2;
 
 /** Fewest samples a window may span, so a slow rate still fits a straight line. */
-export const MINIMUM_WINDOW_SAMPLES = 3;
+const MINIMUM_WINDOW_SAMPLES = 3;
 
 /** Samples spanning {@link DERIVATIVE_WINDOW_S} at `sampleRateHz`, never below {@link MINIMUM_WINDOW_SAMPLES}. */
 export function windowSamplesForRate(sampleRateHz: number): number {
@@ -147,9 +147,6 @@ export const DEFAULT_POLL_INTERVAL_MS = 40;
  * single dropped BLE round trip is normal; ten in a row is not.
  */
 export const MAXIMUM_CONSECUTIVE_FAILURES = 10;
-
-/** Name prefix used to filter the Web Bluetooth device picker. */
-export const MOTION_SENSOR_NAME_FILTER = "Motion";
 
 /** Human-readable name of the position derived from the raw echo-time sample. */
 export const POSITION_MEASUREMENT = "Position";

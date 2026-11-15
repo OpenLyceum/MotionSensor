@@ -61,7 +61,7 @@ const GRAPH_HEADER_HEIGHT = 30;
 /** Gap between the data table and the graph's edges, in pixels. */
 const TABLE_INSET = 10;
 
-export type MotionSensorScreenViewSelfOptions = {
+type MotionSensorScreenViewSelfOptions = {
   readonly a11y: ScreenA11yStrings;
   /** Present on the Simulation screen only; makes the walker draggable. */
   readonly writablePositionProperty?: NumberProperty;
