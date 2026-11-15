@@ -17,6 +17,7 @@ export const PASCO_DEVICE_SERVICE_ID = 0;
 export const MOTION_SENSOR_SERVICE_ID = 1;
 const MOTION_SENSOR_SAMPLE_BYTES = 2;
 export const MOTION_SENSOR_ADVERTISED_NAME = "Motion";
+/** @internal Exported for unit tests; not part of the application API. */
 export const SPEED_OF_SOUND_MPS = 344;
 
 const READ_ONE_SAMPLE = 0x05;
@@ -71,6 +72,7 @@ const STATUS_OK = 0x00;
  * takes. Short raises the receiver's gain for nearby targets; long trades that
  * away for distant echoes. The datasheet spells them `MotionShort:1:MotionLong:2`
  * and the device powers up on long.
+ * @internal Exported for unit tests; not part of the application API.
  */
 export const MotionRange = {
   SHORT: 1,

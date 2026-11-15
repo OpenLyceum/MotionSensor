@@ -82,7 +82,10 @@ export const SAMPLE_RATE_CHOICES_HZ: readonly number[] = [5, 10, 20, 50];
  */
 export const DEFAULT_SAMPLE_RATE_HZ = 20;
 
-/** Derived from {@link DEFAULT_SAMPLE_RATE_HZ}; the model's fixed timestep at the default rate. */
+/**
+ * Derived from {@link DEFAULT_SAMPLE_RATE_HZ}; the model's fixed timestep at the default rate.
+ * @internal Exported for unit tests; not part of the application API.
+ */
 export const DEFAULT_SAMPLE_PERIOD_S = 1 / DEFAULT_SAMPLE_RATE_HZ;
 
 /**

@@ -16,6 +16,7 @@ export type Sample = {
  * window. Returns 0 when there are fewer than two points or the times are
  * degenerate, which is the right answer for a stationary or empty window and
  * avoids a division by zero at the ends of a trace.
+ * @internal Exported for unit tests; not part of the application API.
  */
 export function estimateDerivative(points: readonly Sample[]): number {
   return slopeOverRange(points, 0, points.length);
@@ -60,6 +61,7 @@ function slopeOverRange(points: readonly Sample[], start: number, end: number): 
  * than shrinking, so every sample gets a slope estimated from the same number
  * of points — a shrinking window would make the first and last samples much
  * noisier than the rest, exactly where a turnaround often is.
+ * @internal Exported for unit tests; not part of the application API.
  */
 export function differentiate(samples: readonly Sample[], windowSize: number): Sample[] {
   const n = samples.length;
@@ -88,6 +90,7 @@ export function differentiate(samples: readonly Sample[], windowSize: number): S
  * filling its own window. Until then the value is 0. A window that shrank at
  * the start instead would fit a line through two points, and a start-up is
  * exactly where one stale or zeroed reading makes that slope enormous.
+ * @internal Exported for unit tests; not part of the application API.
  */
 export function differentiateTrailing(samples: readonly Sample[], windowSize: number, firstDefinedIndex = 0): Sample[] {
   return samples.map((sample, index) => ({
