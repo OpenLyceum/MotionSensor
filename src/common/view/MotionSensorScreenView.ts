@@ -1,3 +1,4 @@
+import { MOTION_SENSOR_SCREEN_VIEW_SETTINGS } from "../../MotionSensorConstants.js";
 /**
  * MotionSensorScreenView.ts
  *
@@ -47,19 +48,19 @@ import { RecordControl } from "./RecordControl.js";
 import { SensorOptionsPanel } from "./SensorOptionsPanel.js";
 import { SensorPanel } from "./SensorPanel.js";
 
-const LABEL_FONT = new PhetFont(12);
+const LABEL_FONT = new PhetFont(MOTION_SENSOR_SCREEN_VIEW_SETTINGS.LABEL_FONT_SIZE);
 
 /** Width of the track beneath the graph. */
-const PLAY_AREA_WIDTH = 560;
+const PLAY_AREA_WIDTH: number = MOTION_SENSOR_SCREEN_VIEW_SETTINGS.PLAY_AREA_WIDTH;
 
 /**
  * Height of the graph's own header bar, which is part of its bounds and sits
  * above the plot. The table clears it rather than covering the axis pickers.
  */
-const GRAPH_HEADER_HEIGHT = 30;
+const GRAPH_HEADER_HEIGHT: number = MOTION_SENSOR_SCREEN_VIEW_SETTINGS.GRAPH_HEADER_HEIGHT;
 
 /** Gap between the data table and the graph's edges, in pixels. */
-const TABLE_INSET = 10;
+const TABLE_INSET: number = MOTION_SENSOR_SCREEN_VIEW_SETTINGS.TABLE_INSET;
 
 type MotionSensorScreenViewSelfOptions = {
   readonly a11y: ScreenA11yStrings;
@@ -144,8 +145,8 @@ export class MotionSensorScreenView extends ScreenView {
       comboBoxListParent,
       MAX_GRAPH_DATA_POINTS,
     );
-    graph.left = SCREEN_VIEW_MARGIN + 44;
-    graph.top = SCREEN_VIEW_MARGIN + 24;
+    graph.left = SCREEN_VIEW_MARGIN + MOTION_SENSOR_SCREEN_VIEW_SETTINGS.CONSTRUCTOR_LEFT_OFFSET;
+    graph.top = SCREEN_VIEW_MARGIN + MOTION_SENSOR_SCREEN_VIEW_SETTINGS.CONSTRUCTOR_TOP_OFFSET;
     this.graph = graph;
     this.addChild(graph);
 
@@ -211,7 +212,7 @@ export class MotionSensorScreenView extends ScreenView {
     );
     const viewControl = new VBox({
       align: "left",
-      spacing: 7,
+      spacing: MOTION_SENSOR_SCREEN_VIEW_SETTINGS.VIEW_CONTROL_SPACING,
       children: [showGraphCheckbox, showTableCheckbox],
     });
 
@@ -240,7 +241,7 @@ export class MotionSensorScreenView extends ScreenView {
 
     const controlColumn = new VBox({
       align: "left",
-      spacing: 14,
+      spacing: MOTION_SENSOR_SCREEN_VIEW_SETTINGS.CONTROL_COLUMN_SPACING,
       children: [
         viewControl,
         recordControl,
@@ -316,7 +317,7 @@ export class MotionSensorScreenView extends ScreenView {
       new Text(labelProperty, {
         font: LABEL_FONT,
         fill: MotionSensorColors.textColorProperty,
-        maxWidth: 300,
+        maxWidth: MOTION_SENSOR_SCREEN_VIEW_SETTINGS.CREATE_CHECKBOX_MAX_WIDTH,
       }),
       {
         ...SIM_CHECKBOX_OPTIONS,

@@ -1,3 +1,4 @@
+import { GRAPH_CONTROLS_PANEL_SETTINGS } from "../../../MotionSensorConstants.js";
 /**
  * GraphControlsPanel.ts
  *
@@ -26,18 +27,18 @@ import MotionSensorNamespace from "../../../MotionSensorNamespace.js";
 import type { PlottableProperty } from "./PlottableProperty.js";
 
 // Font sizes
-const COMBO_BOX_FONT = new PhetFont({ size: 12 });
-const TITLE_FONT = new PhetFont({ size: 14 });
+const COMBO_BOX_FONT = new PhetFont({ size: GRAPH_CONTROLS_PANEL_SETTINGS.COMBO_BOX_FONT_SIZE });
+const TITLE_FONT = new PhetFont({ size: GRAPH_CONTROLS_PANEL_SETTINGS.TITLE_FONT_SIZE });
 
 // Layout constants
-const COMBO_BOX_CORNER_RADIUS = 5;
-const COMBO_BOX_X_MARGIN = 6;
-const COMBO_BOX_Y_MARGIN = 3;
-const TITLE_SPACING = 3;
-const HEADER_HEIGHT = 30;
-const HEADER_CORNER_RADIUS = 5;
-const HEADER_LINE_WIDTH = 2;
-const HEADER_DARKEN_FACTOR = 0.1;
+const COMBO_BOX_CORNER_RADIUS: number = GRAPH_CONTROLS_PANEL_SETTINGS.COMBO_BOX_CORNER_RADIUS;
+const COMBO_BOX_X_MARGIN: number = GRAPH_CONTROLS_PANEL_SETTINGS.COMBO_BOX_X_MARGIN;
+const COMBO_BOX_Y_MARGIN: number = GRAPH_CONTROLS_PANEL_SETTINGS.COMBO_BOX_Y_MARGIN;
+const TITLE_SPACING: number = GRAPH_CONTROLS_PANEL_SETTINGS.TITLE_SPACING;
+const HEADER_HEIGHT: number = GRAPH_CONTROLS_PANEL_SETTINGS.HEADER_HEIGHT;
+const HEADER_CORNER_RADIUS: number = GRAPH_CONTROLS_PANEL_SETTINGS.HEADER_CORNER_RADIUS;
+const HEADER_LINE_WIDTH: number = GRAPH_CONTROLS_PANEL_SETTINGS.HEADER_LINE_WIDTH;
+const HEADER_DARKEN_FACTOR: number = GRAPH_CONTROLS_PANEL_SETTINGS.HEADER_DARKEN_FACTOR;
 
 export class GraphControlsPanel {
   private readonly availableProperties: PlottableProperty[];

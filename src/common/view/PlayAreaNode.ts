@@ -1,3 +1,4 @@
+import { PLAY_AREA_NODE_SETTINGS } from "../../MotionSensorConstants.js";
 /**
  * PlayAreaNode.ts
  *
@@ -18,10 +19,10 @@ import { POSITION_RANGE_M, TRACK_HEIGHT, WALKER_HEIGHT } from "../../MotionSenso
 import { LinearTransform } from "./LinearTransform.js";
 import { WalkerNode } from "./WalkerNode.js";
 
-const TICK_LABEL_FONT = new PhetFont(10);
+const TICK_LABEL_FONT = new PhetFont(PLAY_AREA_NODE_SETTINGS.TICK_LABEL_FONT_SIZE);
 
 /** Pixels reserved at each end so the figure stays on the track at either limit. */
-const EDGE_INSET = 26;
+const EDGE_INSET: number = PLAY_AREA_NODE_SETTINGS.EDGE_INSET;
 
 /** Baseline the figure stands on, measured from the top of the track. */
 const GROUND_Y = TRACK_HEIGHT - 16;
@@ -61,9 +62,17 @@ export class PlayAreaNode extends Node {
     const transform = new LinearTransform(width, EDGE_INSET);
     const draggable = providedOptions.writablePositionProperty !== undefined;
 
-    const track = new Rectangle(0, 0, width, TRACK_HEIGHT, 6, 6, {
-      fill: MotionSensorColors.trackColorProperty,
-    });
+    const track = new Rectangle(
+      0,
+      0,
+      width,
+      TRACK_HEIGHT,
+      PLAY_AREA_NODE_SETTINGS.TRACK_CORNER_X,
+      PLAY_AREA_NODE_SETTINGS.TRACK_CORNER_Y,
+      {
+        fill: MotionSensorColors.trackColorProperty,
+      },
+    );
 
     // Metre marks, labelled 0 through 4 — the same numbers as the chart's
     // position axis, so the two halves of the screen read as one system.
@@ -81,7 +90,7 @@ export class PlayAreaNode extends Node {
           font: TICK_LABEL_FONT,
           fill: MotionSensorColors.trackMarkColorProperty,
           centerX: x,
-          top: GROUND_Y + 10,
+          top: GROUND_Y + PLAY_AREA_NODE_SETTINGS.CONSTRUCTOR_TOP_OFFSET,
         }),
       );
     }
@@ -93,11 +102,19 @@ export class PlayAreaNode extends Node {
 
     // The sensor sits at the origin and faces along the track, which is the
     // physical arrangement the activity sheet asks for.
-    const sensorBody = new Rectangle(-10, -14, 20, 28, 3, 3, {
-      fill: MotionSensorColors.sensorBodyColorProperty,
-      x: transform.modelToViewX(0),
-      y: GROUND_Y - 14,
-    });
+    const sensorBody = new Rectangle(
+      PLAY_AREA_NODE_SETTINGS.SENSOR_BODY_X,
+      PLAY_AREA_NODE_SETTINGS.SENSOR_BODY_Y,
+      PLAY_AREA_NODE_SETTINGS.SENSOR_BODY_WIDTH,
+      PLAY_AREA_NODE_SETTINGS.SENSOR_BODY_HEIGHT,
+      PLAY_AREA_NODE_SETTINGS.SENSOR_BODY_CORNER_X,
+      PLAY_AREA_NODE_SETTINGS.SENSOR_BODY_CORNER_Y,
+      {
+        fill: MotionSensorColors.sensorBodyColorProperty,
+        x: transform.modelToViewX(0),
+        y: GROUND_Y - PLAY_AREA_NODE_SETTINGS.SENSOR_BODY_Y_OFFSET,
+      },
+    );
     const beam = new Path(
       new Shape()
         .moveTo(transform.modelToViewX(0) + 10, GROUND_Y - 14)

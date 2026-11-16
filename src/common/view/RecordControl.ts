@@ -1,3 +1,4 @@
+import { RECORD_CONTROL_SETTINGS } from "../../MotionSensorConstants.js";
 /**
  * RecordControl.ts
  *
@@ -33,10 +34,10 @@ import type { MotionSensorModel } from "../model/MotionSensorModel.js";
 import { PositionSourceType } from "../model/PositionSource.js";
 import { RunState } from "../model/RunState.js";
 
-const BUTTON_FONT = new PhetFont(15);
-const LABEL_FONT = new PhetFont(12);
-const TIME_FONT = new PhetFont({ size: 26, weight: "bold" });
-const MESSAGE_FONT = new PhetFont(14);
+const BUTTON_FONT = new PhetFont(RECORD_CONTROL_SETTINGS.BUTTON_FONT_SIZE);
+const LABEL_FONT = new PhetFont(RECORD_CONTROL_SETTINGS.LABEL_FONT_SIZE);
+const TIME_FONT = new PhetFont({ size: RECORD_CONTROL_SETTINGS.TIME_FONT_SIZE, weight: "bold" });
+const MESSAGE_FONT = new PhetFont(RECORD_CONTROL_SETTINGS.MESSAGE_FONT_SIZE);
 
 /** Decimal places on the elapsed-time readout — one tenth of a second is legible; two is noise. */
 const TIME_DECIMALS = 1;
@@ -95,9 +96,9 @@ export class RecordControl extends MotionSensorPanel {
       };
     });
     const sampleRateComboBox = new ComboBox(model.sampleRateProperty, rateItems, listParent, {
-      cornerRadius: 4,
-      xMargin: 6,
-      yMargin: 3,
+      cornerRadius: RECORD_CONTROL_SETTINGS.SAMPLE_RATE_COMBO_BOX_CORNER_RADIUS,
+      xMargin: RECORD_CONTROL_SETTINGS.SAMPLE_RATE_COMBO_BOX_X_MARGIN,
+      yMargin: RECORD_CONTROL_SETTINGS.SAMPLE_RATE_COMBO_BOX_Y_MARGIN,
       buttonFill: MotionSensorColors.panelBackgroundColorProperty,
       buttonStroke: MotionSensorColors.panelBorderColorProperty,
       listFill: MotionSensorColors.panelBackgroundColorProperty,
@@ -107,12 +108,12 @@ export class RecordControl extends MotionSensorPanel {
       enabledProperty: isIdleProperty,
     });
     const sampleRateRow = new HBox({
-      spacing: 8,
+      spacing: RECORD_CONTROL_SETTINGS.SAMPLE_RATE_ROW_SPACING,
       children: [
         new Text(runStrings.sampleRateStringProperty, {
           font: LABEL_FONT,
           fill: MotionSensorColors.textColorProperty,
-          maxWidth: CONTROL_PANEL_WIDTH - 140,
+          maxWidth: CONTROL_PANEL_WIDTH - RECORD_CONTROL_SETTINGS.SAMPLE_RATE_ROW_MAX_WIDTH_OFFSET,
         }),
         sampleRateComboBox,
       ],
@@ -126,7 +127,7 @@ export class RecordControl extends MotionSensorPanel {
     const elapsedText = new Text(elapsedProperty, {
       font: TIME_FONT,
       fill: MotionSensorColors.accentColorProperty,
-      maxWidth: CONTROL_PANEL_WIDTH - 40,
+      maxWidth: CONTROL_PANEL_WIDTH - RECORD_CONTROL_SETTINGS.ELAPSED_TEXT_MAX_WIDTH_OFFSET,
     });
 
     // Only the sensor screen can be unable to record, and only for one reason:
@@ -141,7 +142,7 @@ export class RecordControl extends MotionSensorPanel {
       fill: MotionSensorColors.textColorProperty,
       visibleProperty: needsSensorProperty,
       align: "center",
-      lineWrap: CONTROL_PANEL_WIDTH - 40,
+      lineWrap: CONTROL_PANEL_WIDTH - RECORD_CONTROL_SETTINGS.CONNECT_FIRST_TEXT_LINE_WRAP_OFFSET,
     });
 
     // A recording's clock starts at the sensor's first reading, and a sensor
@@ -152,18 +153,21 @@ export class RecordControl extends MotionSensorPanel {
       fill: MotionSensorColors.textColorProperty,
       visibleProperty: model.awaitingFirstReadingProperty,
       align: "center",
-      lineWrap: CONTROL_PANEL_WIDTH - 40,
+      lineWrap: CONTROL_PANEL_WIDTH - RECORD_CONTROL_SETTINGS.WAITING_TEXT_LINE_WRAP_OFFSET,
     });
 
     super(
       new VBox({
         align: "center",
-        spacing: 10,
+        spacing: RECORD_CONTROL_SETTINGS.CONSTRUCTOR_SPACING,
         preferredWidth: CONTROL_PANEL_WIDTH - 24,
         stretch: false,
         children: [
           elapsedText,
-          new HBox({ spacing: 10, children: [recordButton, stopButton, clearButton] }),
+          new HBox({
+            spacing: RECORD_CONTROL_SETTINGS.CONSTRUCTOR_SPACING,
+            children: [recordButton, stopButton, clearButton],
+          }),
           sampleRateRow,
           connectFirstText,
           waitingText,

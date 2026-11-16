@@ -1,3 +1,4 @@
+import { SENSOR_OPTIONS_PANEL_SETTINGS } from "../../MotionSensorConstants.js";
 /**
  * SensorOptionsPanel.ts
  *
@@ -41,13 +42,13 @@ import { RunState, type RunStateValue } from "../model/RunState.js";
 import type { SensorPositionSource } from "../model/SensorPositionSource.js";
 import { SensorRange, type SensorRangeValue } from "../model/SensorRange.js";
 
-const TITLE_FONT = new PhetFont({ size: 13, weight: "bold" });
-const LABEL_FONT = new PhetFont(12);
-const BUTTON_FONT = new PhetFont(12);
-const READOUT_FONT = new PhetFont(11);
+const TITLE_FONT = new PhetFont({ size: SENSOR_OPTIONS_PANEL_SETTINGS.TITLE_FONT_SIZE, weight: "bold" });
+const LABEL_FONT = new PhetFont(SENSOR_OPTIONS_PANEL_SETTINGS.LABEL_FONT_SIZE);
+const BUTTON_FONT = new PhetFont(SENSOR_OPTIONS_PANEL_SETTINGS.BUTTON_FONT_SIZE);
+const READOUT_FONT = new PhetFont(SENSOR_OPTIONS_PANEL_SETTINGS.READOUT_FONT_SIZE);
 
 /** Decimals on the zero-offset readout; a millimetre is finer than the sensor resolves. */
-const OFFSET_DECIMALS = 3;
+const OFFSET_DECIMALS: number = SENSOR_OPTIONS_PANEL_SETTINGS.OFFSET_DECIMALS;
 
 export type SensorOptionsPanelOptions = {
   readonly source: SensorPositionSource;
@@ -92,7 +93,7 @@ export class SensorOptionsPanel extends MotionSensorPanel {
       new Text(strings.changeSignStringProperty, {
         font: LABEL_FONT,
         fill: MotionSensorColors.textColorProperty,
-        maxWidth: CONTROL_PANEL_WIDTH - 60,
+        maxWidth: CONTROL_PANEL_WIDTH - SENSOR_OPTIONS_PANEL_SETTINGS.CHANGE_SIGN_CHECKBOX_MAX_WIDTH_OFFSET,
       }),
       isIdleProperty,
     );
@@ -101,7 +102,7 @@ export class SensorOptionsPanel extends MotionSensorPanel {
       new Text(strings.zeroAtStartStringProperty, {
         font: LABEL_FONT,
         fill: MotionSensorColors.textColorProperty,
-        maxWidth: CONTROL_PANEL_WIDTH - 60,
+        maxWidth: CONTROL_PANEL_WIDTH - SENSOR_OPTIONS_PANEL_SETTINGS.ZERO_AT_START_CHECKBOX_MAX_WIDTH_OFFSET,
       }),
     );
 
@@ -149,7 +150,7 @@ export class SensorOptionsPanel extends MotionSensorPanel {
       font: READOUT_FONT,
       fill: MotionSensorColors.textColorProperty,
       visibleProperty: hasOffsetProperty,
-      maxWidth: CONTROL_PANEL_WIDTH - 40,
+      maxWidth: CONTROL_PANEL_WIDTH - SENSOR_OPTIONS_PANEL_SETTINGS.OFFSET_TEXT_MAX_WIDTH_OFFSET,
     });
 
     const rangeComboBox = new ComboBox(
@@ -160,9 +161,9 @@ export class SensorOptionsPanel extends MotionSensorPanel {
       ],
       providedOptions.listParent,
       {
-        cornerRadius: 4,
-        xMargin: 6,
-        yMargin: 3,
+        cornerRadius: SENSOR_OPTIONS_PANEL_SETTINGS.RANGE_COMBO_BOX_CORNER_RADIUS,
+        xMargin: SENSOR_OPTIONS_PANEL_SETTINGS.RANGE_COMBO_BOX_X_MARGIN,
+        yMargin: SENSOR_OPTIONS_PANEL_SETTINGS.RANGE_COMBO_BOX_Y_MARGIN,
         buttonFill: MotionSensorColors.panelBackgroundColorProperty,
         buttonStroke: MotionSensorColors.panelBorderColorProperty,
         listFill: MotionSensorColors.panelBackgroundColorProperty,
@@ -175,24 +176,28 @@ export class SensorOptionsPanel extends MotionSensorPanel {
     super(
       new VBox({
         align: "left",
-        spacing: 8,
+        spacing: SENSOR_OPTIONS_PANEL_SETTINGS.CONSTRUCTOR_SPACING,
         preferredWidth: CONTROL_PANEL_WIDTH - 24,
         stretch: false,
         children: [
           new Text(strings.titleStringProperty, {
             font: TITLE_FONT,
             fill: MotionSensorColors.textColorProperty,
-            maxWidth: CONTROL_PANEL_WIDTH - 40,
+            maxWidth: CONTROL_PANEL_WIDTH - SENSOR_OPTIONS_PANEL_SETTINGS.CONSTRUCTOR_MAX_WIDTH_OFFSET,
           }),
           changeSignCheckbox,
           zeroAtStartCheckbox,
           // One per row: side by side the two labels are wider than the control
           // column, and a panel that sticks out past its neighbours reads as a
           // mistake.
-          new VBox({ align: "left", spacing: 6, children: [zeroNowButton, removeZeroButton] }),
+          new VBox({
+            align: "left",
+            spacing: SENSOR_OPTIONS_PANEL_SETTINGS.ITEM_4_SPACING,
+            children: [zeroNowButton, removeZeroButton],
+          }),
           offsetText,
           new HBox({
-            spacing: 8,
+            spacing: SENSOR_OPTIONS_PANEL_SETTINGS.CONSTRUCTOR_SPACING,
             children: [
               new Text(strings.rangeStringProperty, {
                 font: LABEL_FONT,

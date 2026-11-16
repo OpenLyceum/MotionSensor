@@ -1,3 +1,4 @@
+import { MOTION_SENSOR_MODEL_SETTINGS } from "../../MotionSensorConstants.js";
 /**
  * MotionSensorModel.ts
  *
@@ -43,14 +44,14 @@ import { Trace } from "./Trace.js";
  * Clamping stops the accumulator from firing hundreds of catch-up samples and
  * recording a flat line for time the student was not actually there for.
  */
-const MAXIMUM_DT_S = 0.25;
+const MAXIMUM_DT_S: number = MOTION_SENSOR_MODEL_SETTINGS.MAXIMUM_DT_S;
 
 /**
  * Slack for the accumulator comparison. A whole number of period-sized ticks does
  * not sum to a whole number in binary, and without this the loop would
  * occasionally hold a sample back for one extra frame.
  */
-const TIME_EPSILON_S = 1e-9;
+const TIME_EPSILON_S: number = MOTION_SENSOR_MODEL_SETTINGS.TIME_EPSILON_S;
 
 export type MotionSensorModelOptions = {
   /** Which source this screen is locked to. */

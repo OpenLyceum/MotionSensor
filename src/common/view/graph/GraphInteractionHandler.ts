@@ -1,3 +1,4 @@
+import { GRAPH_INTERACTION_HANDLER_SETTINGS } from "../../../MotionSensorConstants.js";
 /**
  * GraphInteractionHandler.ts
  *
@@ -783,8 +784,8 @@ export class GraphInteractionHandler {
    * Create and return resize handles for the graph corners
    */
   public createResizeHandles(): Rectangle[] {
-    const handleSize = 12;
-    const handleOffset = -6; // Center the handle on the corner
+    const handleSize: number = GRAPH_INTERACTION_HANDLER_SETTINGS.HANDLE_SIZE;
+    const handleOffset: number = GRAPH_INTERACTION_HANDLER_SETTINGS.HANDLE_OFFSET; // Center the handle on the corner
 
     // Define corner positions and cursors
     const corners = [
@@ -795,12 +796,20 @@ export class GraphInteractionHandler {
     ];
 
     corners.forEach((corner, index) => {
-      const handle = new Rectangle(corner.x + handleOffset, corner.y + handleOffset, handleSize, handleSize, 2, 2, {
-        fill: MotionSensorColors.panelBackgroundColorProperty,
-        stroke: MotionSensorColors.panelBorderColorProperty,
-        lineWidth: 2,
-        cursor: corner.cursor,
-      });
+      const handle = new Rectangle(
+        corner.x + handleOffset,
+        corner.y + handleOffset,
+        handleSize,
+        handleSize,
+        GRAPH_INTERACTION_HANDLER_SETTINGS.HANDLE_CORNER_X,
+        GRAPH_INTERACTION_HANDLER_SETTINGS.HANDLE_CORNER_Y,
+        {
+          fill: MotionSensorColors.panelBackgroundColorProperty,
+          stroke: MotionSensorColors.panelBorderColorProperty,
+          lineWidth: GRAPH_INTERACTION_HANDLER_SETTINGS.HANDLE_LINE_WIDTH,
+          cursor: corner.cursor,
+        },
+      );
 
       this.resizeHandles.push(handle);
       this.setupResizeHandleDrag(handle, index);
@@ -845,8 +854,8 @@ export class GraphInteractionHandler {
         let deltaY = 0;
 
         // Minimum graph size
-        const minWidth = 200;
-        const minHeight = 150;
+        const minWidth: number = GRAPH_INTERACTION_HANDLER_SETTINGS.MIN_WIDTH;
+        const minHeight: number = GRAPH_INTERACTION_HANDLER_SETTINGS.MIN_HEIGHT;
 
         // Handle different corners
         switch (cornerIndex) {
@@ -904,7 +913,7 @@ export class GraphInteractionHandler {
    * Update resize handle positions after a resize
    */
   public updateResizeHandlePositions(): void {
-    const handleOffset = -6;
+    const handleOffset: number = GRAPH_INTERACTION_HANDLER_SETTINGS.HANDLE_OFFSET;
     const corners = [
       { x: 0, y: 0 },
       { x: this.graphWidth, y: 0 },

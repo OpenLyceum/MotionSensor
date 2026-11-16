@@ -1,3 +1,4 @@
+import { GRAPH_DATA_MANAGER_SETTINGS } from "../../../MotionSensorConstants.js";
 /**
  * GraphDataManager.ts
  *
@@ -17,10 +18,10 @@ import MotionSensorNamespace from "../../../MotionSensorNamespace.js";
 
 // Trail dot appearance: the oldest dot in the trail is small and faint, the
 // newest large and nearly opaque, so the trail reads as a direction of travel.
-const TRAIL_MIN_RADIUS = 3;
-const TRAIL_MAX_RADIUS = 5;
-const TRAIL_MIN_OPACITY = 0.2;
-const TRAIL_MAX_OPACITY = 0.8;
+const TRAIL_MIN_RADIUS: number = GRAPH_DATA_MANAGER_SETTINGS.TRAIL_MIN_RADIUS;
+const TRAIL_MAX_RADIUS: number = GRAPH_DATA_MANAGER_SETTINGS.TRAIL_MAX_RADIUS;
+const TRAIL_MIN_OPACITY: number = GRAPH_DATA_MANAGER_SETTINGS.TRAIL_MIN_OPACITY;
+const TRAIL_MAX_OPACITY: number = GRAPH_DATA_MANAGER_SETTINGS.TRAIL_MAX_OPACITY;
 
 /**
  * Configuration for grid lines, tick marks, and tick labels
@@ -156,7 +157,10 @@ export class GraphDataManager {
     this.linePlot.setDataSet([]);
 
     // Reset to default ranges
-    const defaultRange = new Range(-10, 10);
+    const defaultRange = new Range(
+      GRAPH_DATA_MANAGER_SETTINGS.DEFAULT_RANGE_MIN,
+      GRAPH_DATA_MANAGER_SETTINGS.DEFAULT_RANGE_MAX,
+    );
     this.chartTransform.setModelXRange(defaultRange);
     this.chartTransform.setModelYRange(defaultRange);
 

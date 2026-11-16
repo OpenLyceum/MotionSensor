@@ -14,14 +14,15 @@ import { Shape } from "scenerystack/kite";
 import { Circle, Line, Node, Path, Rectangle } from "scenerystack/scenery";
 import { ScreenIcon } from "scenerystack/sim";
 import MotionSensorColors from "../MotionSensorColors.js";
+import { MOTION_SENSOR_SCREEN_ICONS_SETTINGS } from "../MotionSensorConstants.js";
 
 const W = 548;
 const H = 373;
 
 /** Inset of the plot area from the icon edge, leaving room for the axes. */
-const PLOT_LEFT = 74;
+const PLOT_LEFT: number = MOTION_SENSOR_SCREEN_ICONS_SETTINGS.PLOT_LEFT;
 const PLOT_RIGHT = W - 40;
-const PLOT_TOP = 40;
+const PLOT_TOP: number = MOTION_SENSOR_SCREEN_ICONS_SETTINGS.PLOT_TOP;
 const PLOT_BOTTOM = H - 60;
 
 function background(): Rectangle {
@@ -34,23 +35,29 @@ function axesAndGrid(): Node {
   for (let i = 1; i <= 3; i++) {
     const x = PLOT_LEFT + (i * (PLOT_RIGHT - PLOT_LEFT)) / 4;
     children.push(
-      new Line(x, PLOT_TOP, x, PLOT_BOTTOM, { stroke: MotionSensorColors.chartGridColorProperty, lineWidth: 3 }),
+      new Line(x, PLOT_TOP, x, PLOT_BOTTOM, {
+        stroke: MotionSensorColors.chartGridColorProperty,
+        lineWidth: MOTION_SENSOR_SCREEN_ICONS_SETTINGS.AXES_AND_GRID_LINE_WIDTH,
+      }),
     );
   }
   for (let i = 1; i <= 2; i++) {
     const y = PLOT_TOP + (i * (PLOT_BOTTOM - PLOT_TOP)) / 3;
     children.push(
-      new Line(PLOT_LEFT, y, PLOT_RIGHT, y, { stroke: MotionSensorColors.chartGridColorProperty, lineWidth: 3 }),
+      new Line(PLOT_LEFT, y, PLOT_RIGHT, y, {
+        stroke: MotionSensorColors.chartGridColorProperty,
+        lineWidth: MOTION_SENSOR_SCREEN_ICONS_SETTINGS.AXES_AND_GRID_LINE_WIDTH,
+      }),
     );
   }
   children.push(
     new Line(PLOT_LEFT, PLOT_TOP, PLOT_LEFT, PLOT_BOTTOM, {
       stroke: MotionSensorColors.chartBorderColorProperty,
-      lineWidth: 6,
+      lineWidth: MOTION_SENSOR_SCREEN_ICONS_SETTINGS.AXES_AND_GRID_LINE_WIDTH_VARIANT_2,
     }),
     new Line(PLOT_LEFT, PLOT_BOTTOM, PLOT_RIGHT, PLOT_BOTTOM, {
       stroke: MotionSensorColors.chartBorderColorProperty,
-      lineWidth: 6,
+      lineWidth: MOTION_SENSOR_SCREEN_ICONS_SETTINGS.AXES_AND_GRID_LINE_WIDTH_VARIANT_2,
     }),
   );
   return new Node({ children: children });
@@ -62,7 +69,7 @@ function axesAndGrid(): Node {
  */
 function tracePath(): Path {
   const shape = new Shape();
-  const steps = 48;
+  const steps: number = MOTION_SENSOR_SCREEN_ICONS_SETTINGS.STEPS;
   for (let i = 0; i <= steps; i++) {
     const t = i / steps;
     const x = PLOT_LEFT + t * (PLOT_RIGHT - PLOT_LEFT);
@@ -76,7 +83,7 @@ function tracePath(): Path {
   }
   return new Path(shape, {
     stroke: MotionSensorColors.traceColorProperty,
-    lineWidth: 14,
+    lineWidth: MOTION_SENSOR_SCREEN_ICONS_SETTINGS.TRACE_PATH_LINE_WIDTH,
     lineCap: "round",
     lineJoin: "round",
   });
@@ -98,12 +105,12 @@ export function createSimulationIcon(): ScreenIcon {
         axesAndGrid(),
         tracePath(),
         // The cursor that drew it, at the top of the arch.
-        new Circle(17, {
+        new Circle(MOTION_SENSOR_SCREEN_ICONS_SETTINGS.CREATE_SIMULATION_ICON_RADIUS, {
           fill: MotionSensorColors.walkerColorProperty,
           stroke: MotionSensorColors.backgroundColorProperty,
-          lineWidth: 5,
+          lineWidth: MOTION_SENSOR_SCREEN_ICONS_SETTINGS.CREATE_SIMULATION_ICON_LINE_WIDTH,
           centerX: (PLOT_LEFT + PLOT_RIGHT) / 2,
-          centerY: PLOT_TOP + 20,
+          centerY: PLOT_TOP + MOTION_SENSOR_SCREEN_ICONS_SETTINGS.CREATE_SIMULATION_ICON_CENTER_Y_OFFSET,
         }),
       ],
     }),
@@ -121,14 +128,26 @@ export function createSensorIcon(): ScreenIcon {
         // across it — the reading is what the curve is made of.
         new Path(
           new Shape()
-            .moveTo(56, H - 92)
+            .moveTo(MOTION_SENSOR_SCREEN_ICONS_SETTINGS.CREATE_SENSOR_ICON_X, H - 92)
             .lineTo(PLOT_RIGHT, H - 160)
             .lineTo(PLOT_RIGHT, H - 24)
             .close(),
           { fill: MotionSensorColors.sensorBeamColorProperty },
         ),
-        new Rectangle(20, H - 126, 46, 68, 8, 8, { fill: MotionSensorColors.sensorBodyColorProperty }),
-        new Circle(14, { fill: MotionSensorColors.backgroundColorProperty, centerX: 43, centerY: H - 92 }),
+        new Rectangle(
+          MOTION_SENSOR_SCREEN_ICONS_SETTINGS.CREATE_SENSOR_ICON_X_SEGMENT_2,
+          H - 126,
+          MOTION_SENSOR_SCREEN_ICONS_SETTINGS.CREATE_SENSOR_ICON_WIDTH,
+          MOTION_SENSOR_SCREEN_ICONS_SETTINGS.CREATE_SENSOR_ICON_HEIGHT,
+          MOTION_SENSOR_SCREEN_ICONS_SETTINGS.CREATE_SENSOR_ICON_CORNER_X,
+          MOTION_SENSOR_SCREEN_ICONS_SETTINGS.CREATE_SENSOR_ICON_CORNER_Y,
+          { fill: MotionSensorColors.sensorBodyColorProperty },
+        ),
+        new Circle(MOTION_SENSOR_SCREEN_ICONS_SETTINGS.CREATE_SENSOR_ICON_RADIUS, {
+          fill: MotionSensorColors.backgroundColorProperty,
+          centerX: MOTION_SENSOR_SCREEN_ICONS_SETTINGS.CREATE_SENSOR_ICON_CENTER_X,
+          centerY: H - MOTION_SENSOR_SCREEN_ICONS_SETTINGS.CREATE_SENSOR_ICON_CENTER_Y_OFFSET,
+        }),
       ],
     }),
   );

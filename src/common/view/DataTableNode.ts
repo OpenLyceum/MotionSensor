@@ -1,3 +1,4 @@
+import { DATA_TABLE_NODE_SETTINGS } from "../../MotionSensorConstants.js";
 /**
  * DataTableNode.ts
  *
@@ -43,29 +44,29 @@ import type { MotionSensorModel } from "../model/MotionSensorModel.js";
 import { type CsvColumn, toCsv } from "./dataTableCsv.js";
 import type { PlottableProperty } from "./graph/PlottableProperty.js";
 
-const HEADER_FONT = new PhetFont({ size: 11, weight: "bold" });
-const CELL_FONT = new PhetFont({ size: 11 });
-const COMBO_BOX_FONT = new PhetFont({ size: 11 });
-const FOOTER_FONT = new PhetFont({ size: 10 });
-const BUTTON_FONT = new PhetFont({ size: 11 });
-const SCROLL_BUTTON_FONT = new PhetFont({ size: 11, weight: "bold" });
+const HEADER_FONT = new PhetFont({ size: DATA_TABLE_NODE_SETTINGS.HEADER_FONT_SIZE, weight: "bold" });
+const CELL_FONT = new PhetFont({ size: DATA_TABLE_NODE_SETTINGS.CELL_FONT_SIZE });
+const COMBO_BOX_FONT = new PhetFont({ size: DATA_TABLE_NODE_SETTINGS.COMBO_BOX_FONT_SIZE });
+const FOOTER_FONT = new PhetFont({ size: DATA_TABLE_NODE_SETTINGS.FOOTER_FONT_SIZE });
+const BUTTON_FONT = new PhetFont({ size: DATA_TABLE_NODE_SETTINGS.BUTTON_FONT_SIZE });
+const SCROLL_BUTTON_FONT = new PhetFont({ size: DATA_TABLE_NODE_SETTINGS.SCROLL_BUTTON_FONT_SIZE, weight: "bold" });
 
 /**
  * Rows on screen at once. Enough to see a turnaround, and chosen so the panel
  * fits inside the graph's plot area rather than hanging over its tick labels;
  * the rest of a recording is a scroll — or a download — away.
  */
-const VISIBLE_ROWS = 10;
-const ROW_HEIGHT = 17;
-const COLUMN_WIDTH = 84;
-const COLUMN_GAP = 12;
+const VISIBLE_ROWS: number = DATA_TABLE_NODE_SETTINGS.VISIBLE_ROWS;
+const ROW_HEIGHT: number = DATA_TABLE_NODE_SETTINGS.ROW_HEIGHT;
+const COLUMN_WIDTH: number = DATA_TABLE_NODE_SETTINGS.COLUMN_WIDTH;
+const COLUMN_GAP: number = DATA_TABLE_NODE_SETTINGS.COLUMN_GAP;
 const TABLE_WIDTH = 2 * COLUMN_WIDTH + COLUMN_GAP;
 
 /** Rows moved by one press of a scroll button, or one notch of the wheel. */
-const SCROLL_STEP_ROWS = 3;
+const SCROLL_STEP_ROWS: number = DATA_TABLE_NODE_SETTINGS.SCROLL_STEP_ROWS;
 
 /** Decimals in every cell and in the CSV. Three is a millimetre — past any sensor's honesty. */
-const VALUE_DECIMALS = 3;
+const VALUE_DECIMALS: number = DATA_TABLE_NODE_SETTINGS.VALUE_DECIMALS;
 
 /** Downloaded file name. Stamped so a student's downloads folder stays sortable. */
 function csvFileName(): string {
@@ -148,9 +149,9 @@ export class DataTableNode extends MotionSensorPanel {
         })),
         providedOptions.listParent,
         {
-          cornerRadius: 4,
-          xMargin: 5,
-          yMargin: 2,
+          cornerRadius: DATA_TABLE_NODE_SETTINGS.CREATE_COMBO_BOX_CORNER_RADIUS,
+          xMargin: DATA_TABLE_NODE_SETTINGS.CREATE_COMBO_BOX_X_MARGIN,
+          yMargin: DATA_TABLE_NODE_SETTINGS.CREATE_COMBO_BOX_Y_MARGIN,
           buttonFill: MotionSensorColors.panelBackgroundColorProperty,
           buttonStroke: MotionSensorColors.panelBorderColorProperty,
           listFill: MotionSensorColors.panelBackgroundColorProperty,
@@ -211,8 +212,8 @@ export class DataTableNode extends MotionSensorPanel {
       new RectangularPushButton({
         ...FLAT_PANEL_PUSH_BUTTON_OPTIONS,
         content: new Text(glyph, { font: SCROLL_BUTTON_FONT, fill: LIGHT_SURFACE_TEXT_FILL }),
-        xMargin: 7,
-        yMargin: 3,
+        xMargin: DATA_TABLE_NODE_SETTINGS.CREATE_SCROLL_BUTTON_X_MARGIN,
+        yMargin: DATA_TABLE_NODE_SETTINGS.CREATE_SCROLL_BUTTON_Y_MARGIN,
         listener: () => scrollBy(rows),
         accessibleName: accessibleName,
         enabledProperty: enabledProperty,
@@ -242,13 +243,13 @@ export class DataTableNode extends MotionSensorPanel {
           font: FOOTER_FONT,
           fill: MotionSensorColors.textColorProperty,
           visibleProperty: hasDataProperty,
-          maxWidth: TABLE_WIDTH - 70,
+          maxWidth: TABLE_WIDTH - DATA_TABLE_NODE_SETTINGS.FOOTER_MAX_WIDTH_OFFSET,
         }),
         new Text(strings.emptyStringProperty, {
           font: FOOTER_FONT,
           fill: MotionSensorColors.textColorProperty,
           visibleProperty: isEmptyProperty,
-          maxWidth: TABLE_WIDTH - 70,
+          maxWidth: TABLE_WIDTH - DATA_TABLE_NODE_SETTINGS.FOOTER_MAX_WIDTH_OFFSET,
         }),
       ],
     });
@@ -290,15 +291,25 @@ export class DataTableNode extends MotionSensorPanel {
     super(
       new VBox({
         align: "left",
-        spacing: 7,
+        spacing: DATA_TABLE_NODE_SETTINGS.CONSTRUCTOR_SPACING,
         children: [
           new HBox({ spacing: COLUMN_GAP, children: [columnAComboBox, columnBComboBox] }),
-          new VBox({ align: "left", spacing: 3, children: [headerRow, headerRule, body] }),
-          new HBox({ spacing: 6, children: [scrollUpButton, scrollDownButton, footer] }),
+          new VBox({
+            align: "left",
+            spacing: DATA_TABLE_NODE_SETTINGS.ITEM_2_SPACING,
+            children: [headerRow, headerRule, body],
+          }),
+          new HBox({
+            spacing: DATA_TABLE_NODE_SETTINGS.ITEM_3_SPACING,
+            children: [scrollUpButton, scrollDownButton, footer],
+          }),
           downloadButton,
         ],
       }),
-      { xMargin: 10, yMargin: 8 },
+      {
+        xMargin: DATA_TABLE_NODE_SETTINGS.CONSTRUCTOR_X_MARGIN,
+        yMargin: DATA_TABLE_NODE_SETTINGS.CONSTRUCTOR_Y_MARGIN,
+      },
     );
 
     this.columnAComboBox = columnAComboBox;

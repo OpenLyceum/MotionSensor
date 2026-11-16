@@ -1,3 +1,4 @@
+import { MOTION_SENSOR_PANEL_SETTINGS } from "../MotionSensorConstants.js";
 /**
  * MotionSensorPanel.ts
  *
@@ -40,8 +41,8 @@ export class MotionSensorPanel extends Panel {
         fill: MotionSensorColors.panelBackgroundColorProperty,
         stroke: MotionSensorColors.panelBorderColorProperty,
         cornerRadius: PANEL_CORNER_RADIUS,
-        xMargin: 12,
-        yMargin: 10,
+        xMargin: MOTION_SENSOR_PANEL_SETTINGS.OPTIONS_X_MARGIN,
+        yMargin: MOTION_SENSOR_PANEL_SETTINGS.OPTIONS_Y_MARGIN,
       },
       providedOptions,
     );

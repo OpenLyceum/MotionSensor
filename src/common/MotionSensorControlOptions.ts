@@ -1,3 +1,4 @@
+import { MOTION_SENSOR_CONTROL_OPTIONS_SETTINGS } from "../MotionSensorConstants.js";
 /**
  * MotionSensorControlOptions.ts
  *
@@ -11,7 +12,7 @@
 import type { CheckboxOptions } from "scenerystack/sun";
 import MotionSensorColors from "../MotionSensorColors.js";
 
-const CHECKBOX_BOX_WIDTH = 16;
+const CHECKBOX_BOX_WIDTH: number = MOTION_SENSOR_CONTROL_OPTIONS_SETTINGS.CHECKBOX_BOX_WIDTH;
 
 /**
  * Themed checkbox chrome on dark panel backgrounds.
@@ -25,7 +26,7 @@ const CHECKBOX_BOX_WIDTH = 16;
  */
 export const SIM_CHECKBOX_OPTIONS = {
   boxWidth: CHECKBOX_BOX_WIDTH,
-  spacing: 4,
+  spacing: MOTION_SENSOR_CONTROL_OPTIONS_SETTINGS.SIM_CHECKBOX_OPTIONS_SPACING,
   checkboxColor: MotionSensorColors.textColorProperty,
   checkboxColorBackground: MotionSensorColors.panelBackgroundColorProperty,
 } satisfies CheckboxOptions;

@@ -1,3 +1,4 @@
+import { SENSOR_POSITION_SOURCE_SETTINGS } from "../../MotionSensorConstants.js";
 /**
  * SensorPositionSource.ts
  *
@@ -66,13 +67,13 @@ export type SensorTransportValue = (typeof SensorTransport)[keyof typeof SensorT
  * Long enough to cover a slow first sample, short enough that a short
  * recording still gets a trace.
  */
-const STREAM_SILENCE_TIMEOUT_MS = 1000;
+const STREAM_SILENCE_TIMEOUT_MS: number = SENSOR_POSITION_SOURCE_SETTINGS.STREAM_SILENCE_TIMEOUT_MS;
 
 /**
  * Sample periods of silence tolerated, so a period raised with
  * `?pollIntervalMs=` is not mistaken for a dead stream.
  */
-const STREAM_SILENCE_PERIODS = 5;
+const STREAM_SILENCE_PERIODS: number = SENSOR_POSITION_SOURCE_SETTINGS.STREAM_SILENCE_PERIODS;
 
 export type SensorPositionSourceOptions = {
   /**

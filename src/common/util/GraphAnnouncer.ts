@@ -1,3 +1,4 @@
+import { GRAPH_ANNOUNCER_SETTINGS } from "../../MotionSensorConstants.js";
 /**
  * GraphAnnouncer.ts
  *
@@ -21,7 +22,7 @@ import MotionSensorNamespace from "../../MotionSensorNamespace.js";
  * Milliseconds of quiet required before an axis change is spoken. Long enough
  * to swallow a run of rapid selections, short enough not to feel laggy.
  */
-const GRAPH_CHANGE_ANNOUNCEMENT_DELAY = 200;
+const GRAPH_CHANGE_ANNOUNCEMENT_DELAY: number = GRAPH_ANNOUNCER_SETTINGS.GRAPH_CHANGE_ANNOUNCEMENT_DELAY;
 
 const graphChangeUtterance = new Utterance({
   priority: 1,

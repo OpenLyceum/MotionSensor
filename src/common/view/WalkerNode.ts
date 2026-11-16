@@ -1,3 +1,4 @@
+import { WALKER_NODE_SETTINGS } from "../../MotionSensorConstants.js";
 /**
  * WalkerNode.ts
  *
@@ -16,11 +17,11 @@ import MotionSensorColors from "../../MotionSensorColors.js";
 import { WALKER_HEIGHT } from "../../MotionSensorConstants.js";
 
 /** Proportions of the figure, as fractions of WALKER_HEIGHT. */
-const HEAD_RADIUS = 0.13;
-const SHOULDER_Y = 0.3;
-const HIP_Y = 0.62;
-const ARM_SPAN = 0.16;
-const LEG_SPAN = 0.15;
+const HEAD_RADIUS: number = WALKER_NODE_SETTINGS.HEAD_RADIUS;
+const SHOULDER_Y: number = WALKER_NODE_SETTINGS.SHOULDER_Y;
+const HIP_Y: number = WALKER_NODE_SETTINGS.HIP_Y;
+const ARM_SPAN: number = WALKER_NODE_SETTINGS.ARM_SPAN;
+const LEG_SPAN: number = WALKER_NODE_SETTINGS.LEG_SPAN;
 
 export type WalkerNodeOptions = {
   /** Accessible name for the figure. */
@@ -58,7 +59,7 @@ export class WalkerNode extends Node {
 
     const limbs = new Path(body, {
       stroke: MotionSensorColors.walkerColorProperty,
-      lineWidth: 0.07 * height,
+      lineWidth: WALKER_NODE_SETTINGS.LIMBS_LINE_WIDTH_FACTOR * height,
       lineCap: "round",
       lineJoin: "round",
     });

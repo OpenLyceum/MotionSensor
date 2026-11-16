@@ -1,3 +1,4 @@
+import { CONFIGURABLE_GRAPH_SETTINGS } from "../../../MotionSensorConstants.js";
 /**
  * ConfigurableGraph.ts
  *
@@ -38,28 +39,28 @@ import { GraphInteractionHandler } from "./GraphInteractionHandler.js";
 import type { PlottableProperty } from "./PlottableProperty.js";
 
 // Grid line styling
-const GRID_LINE_WIDTH = 0.5;
-const PLOT_LINE_WIDTH = 2;
-const TICK_EXTENT = 8;
-const TICK_LABEL_FONT = new PhetFont({ size: 10 });
-const TICK_LABEL_DECIMALS = 2;
+const GRID_LINE_WIDTH: number = CONFIGURABLE_GRAPH_SETTINGS.GRID_LINE_WIDTH;
+const PLOT_LINE_WIDTH: number = CONFIGURABLE_GRAPH_SETTINGS.PLOT_LINE_WIDTH;
+const TICK_EXTENT: number = CONFIGURABLE_GRAPH_SETTINGS.TICK_EXTENT;
+const TICK_LABEL_FONT = new PhetFont({ size: CONFIGURABLE_GRAPH_SETTINGS.TICK_LABEL_FONT_SIZE });
+const TICK_LABEL_DECIMALS: number = CONFIGURABLE_GRAPH_SETTINGS.TICK_LABEL_DECIMALS;
 
 // Axis labels
-const AXIS_LABEL_FONT = new PhetFont({ size: 12 });
-const AXIS_LABEL_OFFSET = 35;
+const AXIS_LABEL_FONT = new PhetFont({ size: CONFIGURABLE_GRAPH_SETTINGS.AXIS_LABEL_FONT_SIZE });
+const AXIS_LABEL_OFFSET: number = CONFIGURABLE_GRAPH_SETTINGS.AXIS_LABEL_OFFSET;
 
 // Axis interaction regions
-const Y_AXIS_INTERACTION_WIDTH = 60;
-const X_AXIS_INTERACTION_HEIGHT = 30;
+const Y_AXIS_INTERACTION_WIDTH: number = CONFIGURABLE_GRAPH_SETTINGS.Y_AXIS_INTERACTION_WIDTH;
+const X_AXIS_INTERACTION_HEIGHT: number = CONFIGURABLE_GRAPH_SETTINGS.X_AXIS_INTERACTION_HEIGHT;
 
 // Control button styling
-const BUTTON_SIZE = 24;
-const BUTTON_PADDING = 4;
-const BUTTON_SPACING = 2;
-const BUTTON_CORNER_RADIUS = 3;
-const BUTTON_FONT = new PhetFont({ size: 14, weight: "bold" });
-const BUTTON_HOVER_OPACITY = 0.8;
-const TITLE_BOTTOM_OFFSET = -5;
+const BUTTON_SIZE: number = CONFIGURABLE_GRAPH_SETTINGS.BUTTON_SIZE;
+const BUTTON_PADDING: number = CONFIGURABLE_GRAPH_SETTINGS.BUTTON_PADDING;
+const BUTTON_SPACING: number = CONFIGURABLE_GRAPH_SETTINGS.BUTTON_SPACING;
+const BUTTON_CORNER_RADIUS: number = CONFIGURABLE_GRAPH_SETTINGS.BUTTON_CORNER_RADIUS;
+const BUTTON_FONT = new PhetFont({ size: CONFIGURABLE_GRAPH_SETTINGS.BUTTON_FONT_SIZE, weight: "bold" });
+const BUTTON_HOVER_OPACITY: number = CONFIGURABLE_GRAPH_SETTINGS.BUTTON_HOVER_OPACITY;
+const TITLE_BOTTOM_OFFSET: number = CONFIGURABLE_GRAPH_SETTINGS.TITLE_BOTTOM_OFFSET;
 
 export class ConfigurableGraph extends Node {
   private readonly availableProperties: PlottableProperty[];
@@ -129,7 +130,7 @@ export class ConfigurableGraph extends Node {
     width: number,
     height: number,
     listParent: Node,
-    maxDataPoints: number = 2000,
+    maxDataPoints: number = CONFIGURABLE_GRAPH_SETTINGS.DEFAULT_MAX_DATA_POINTS,
   ) {
     super();
 
@@ -157,7 +158,10 @@ export class ConfigurableGraph extends Node {
     this.graphContentNode = new Node();
 
     // Create chart transform with initial ranges
-    const initialRange = new Range(-10, 10);
+    const initialRange = new Range(
+      CONFIGURABLE_GRAPH_SETTINGS.INITIAL_RANGE_MIN,
+      CONFIGURABLE_GRAPH_SETTINGS.INITIAL_RANGE_MAX,
+    );
     this.chartTransform = new ChartTransform({
       viewWidth: width,
       viewHeight: height,
@@ -335,7 +339,7 @@ export class ConfigurableGraph extends Node {
           buttonBackground.opacity = BUTTON_HOVER_OPACITY;
         },
         exit: () => {
-          buttonBackground.opacity = 1.0;
+          buttonBackground.opacity = CONFIGURABLE_GRAPH_SETTINGS.OPACITY_OPACITY;
         },
       });
 
@@ -547,14 +551,14 @@ export class ConfigurableGraph extends Node {
     this.chartTransform.setViewHeight(newHeight);
 
     // Update invisible interaction regions
-    const axisInteractionWidth = 60;
-    const axisInteractionHeight = 30;
+    const axisInteractionWidth: number = CONFIGURABLE_GRAPH_SETTINGS.AXIS_INTERACTION_WIDTH;
+    const axisInteractionHeight: number = CONFIGURABLE_GRAPH_SETTINGS.AXIS_INTERACTION_HEIGHT;
     this.yAxisInteractionRegion.setRect(-axisInteractionWidth, 0, axisInteractionWidth, newHeight);
     this.xAxisInteractionRegion.setRect(0, newHeight, newWidth, axisInteractionHeight);
 
     // Update axis labels positions
     this.xAxisLabelNode.centerX = newWidth / 2;
-    this.xAxisLabelNode.top = newHeight + 35;
+    this.xAxisLabelNode.top = newHeight + CONFIGURABLE_GRAPH_SETTINGS.RESIZE_GRAPH_TOP_OFFSET;
     this.yAxisLabelNode.centerY = newHeight / 2;
 
     // Update title panel position

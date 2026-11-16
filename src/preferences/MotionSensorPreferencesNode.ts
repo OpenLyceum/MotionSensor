@@ -1,3 +1,4 @@
+import { MOTION_SENSOR_PREFERENCES_NODE_SETTINGS } from "../MotionSensorConstants.js";
 /**
  * MotionSensorPreferencesNode.ts
  *
@@ -19,8 +20,8 @@ import MotionSensorColors from "../MotionSensorColors.js";
 import MotionSensorNamespace from "../MotionSensorNamespace.js";
 import type { MotionSensorPreferencesModel } from "./MotionSensorPreferencesModel.js";
 
-const LABEL_FONT = new PhetFont(14);
-const CONTENT_WIDTH = 440;
+const LABEL_FONT = new PhetFont(MOTION_SENSOR_PREFERENCES_NODE_SETTINGS.LABEL_FONT_SIZE);
+const CONTENT_WIDTH: number = MOTION_SENSOR_PREFERENCES_NODE_SETTINGS.CONTENT_WIDTH;
 
 export class MotionSensorPreferencesNode extends Node {
   public constructor(preferences: MotionSensorPreferencesModel, tandem?: Tandem) {
@@ -31,7 +32,7 @@ export class MotionSensorPreferencesNode extends Node {
       new Text(strings.showDiagnosticsStringProperty, {
         font: LABEL_FONT,
         fill: MotionSensorColors.controlSurfaceTextColorProperty,
-        maxWidth: CONTENT_WIDTH - 40,
+        maxWidth: CONTENT_WIDTH - MOTION_SENSOR_PREFERENCES_NODE_SETTINGS.DIAGNOSTICS_CHECKBOX_MAX_WIDTH_OFFSET,
       }),
       {
         accessibleName: strings.showDiagnosticsStringProperty,
@@ -43,7 +44,7 @@ export class MotionSensorPreferencesNode extends Node {
       children: [
         new VBox({
           align: "left",
-          spacing: 12,
+          spacing: MOTION_SENSOR_PREFERENCES_NODE_SETTINGS.CONSTRUCTOR_SPACING,
           children: [diagnosticsCheckbox],
         }),
       ],
