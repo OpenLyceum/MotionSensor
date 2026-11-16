@@ -210,23 +210,23 @@ export const MOTION_SENSOR_SCREEN_ICONS_SETTINGS = {
 
 /** Settings for common/model/MotionSensorModel.ts. */
 export const MOTION_SENSOR_MODEL_SETTINGS = {
-  /** * A dt larger than this is a tab that was backgrounded, not a slow frame. Clamping stops the accumulator from firing hundreds of catch-up samples and recording a flat line for time the student was not actually there for. */
+  /** A dt larger than this is a tab that was backgrounded, not a slow frame. Clamping stops the accumulator from firing hundreds of catch-up samples and recording a flat line for time the student was not actually there for. */
   MAXIMUM_DT_S: 0.25,
-  /** * Slack for the accumulator comparison. A whole number of period-sized ticks does not sum to a whole number in binary, and without this the loop would occasionally hold a sample back for one extra frame. */
+  /** Slack for the accumulator comparison. A whole number of period-sized ticks does not sum to a whole number in binary, and without this the loop would occasionally hold a sample back for one extra frame. */
   TIME_EPSILON_S: 1e-9,
 } as const;
 
 /** Settings for common/model/SensorPositionSource.ts. */
 export const SENSOR_POSITION_SOURCE_SETTINGS = {
-  /** * How long a stream may say nothing before the recording gives up on it. Long enough to cover a slow first sample, short enough that a short recording still gets a trace. */
+  /** How long a stream may say nothing before the recording gives up on it. Long enough to cover a slow first sample, short enough that a short recording still gets a trace. */
   STREAM_SILENCE_TIMEOUT_MS: 1000,
-  /** * Sample periods of silence tolerated, so a period raised with `?pollIntervalMs=` is not mistaken for a dead stream. */
+  /** Sample periods of silence tolerated, so a period raised with `?pollIntervalMs=` is not mistaken for a dead stream. */
   STREAM_SILENCE_PERIODS: 5,
 } as const;
 
 /** Settings for common/util/GraphAnnouncer.ts. */
 export const GRAPH_ANNOUNCER_SETTINGS = {
-  /** * Milliseconds of quiet required before an axis change is spoken. Long enough to swallow a run of rapid selections, short enough not to feel laggy. */
+  /** Milliseconds of quiet required before an axis change is spoken. Long enough to swallow a run of rapid selections, short enough not to feel laggy. */
   GRAPH_CHANGE_ANNOUNCEMENT_DELAY: 200,
 } as const;
 
@@ -249,7 +249,7 @@ export const DATA_TABLE_NODE_SETTINGS = {
   BUTTON_FONT_SIZE: 11,
   /** Scroll button font size (px). */
   SCROLL_BUTTON_FONT_SIZE: 11,
-  /** * Rows on screen at once. Enough to see a turnaround, and chosen so the panel fits inside the graph's plot area rather than hanging over its tick labels; the rest of a recording is a scroll — or a download — away. */
+  /** Rows on screen at once. Enough to see a turnaround, and chosen so the panel fits inside the graph's plot area rather than hanging over its tick labels; the rest of a recording is a scroll — or a download — away. */
   VISIBLE_ROWS: 10,
   /** Row height (px). */
   ROW_HEIGHT: 17,
@@ -288,7 +288,7 @@ export const MOTION_SENSOR_SCREEN_VIEW_SETTINGS = {
   LABEL_FONT_SIZE: 12,
   /** Width of the track beneath the graph. */
   PLAY_AREA_WIDTH: 560,
-  /** * Height of the graph's own header bar, which is part of its bounds and sits above the plot. The table clears it rather than covering the axis pickers. */
+  /** Height of the graph's own header bar, which is part of its bounds and sits above the plot. The table clears it rather than covering the axis pickers. */
   GRAPH_HEADER_HEIGHT: 30,
   /** Gap between the data table and the graph's edges, in pixels. */
   TABLE_INSET: 10,
@@ -411,13 +411,13 @@ export const WALKER_NODE_SETTINGS = {
 
   /** Proportions of the figure, as fractions of WALKER_HEIGHT. */
   HEAD_RADIUS: 0.13,
-  /** Shoulder y (px). */
+  /** Shoulder height as a fraction of WALKER_HEIGHT. */
   SHOULDER_Y: 0.3,
-  /** Hip y (px). */
+  /** Hip height as a fraction of WALKER_HEIGHT. */
   HIP_Y: 0.62,
-  /** Arm span (px). */
+  /** Half-width of the arm span as a fraction of WALKER_HEIGHT. */
   ARM_SPAN: 0.16,
-  /** Leg span (px). */
+  /** Half-width of the stance as a fraction of WALKER_HEIGHT. */
   LEG_SPAN: 0.15,
 } as const;
 
@@ -433,7 +433,7 @@ export const CONFIGURABLE_GRAPH_SETTINGS = {
   TICK_EXTENT: 8,
   /** Tick label font size (px). */
   TICK_LABEL_FONT_SIZE: 10,
-  /** Tick label decimals (px). */
+  /** Decimal places on axis tick labels (digits). */
   TICK_LABEL_DECIMALS: 2,
   /** Axis label font size (px). */
   AXIS_LABEL_FONT_SIZE: 12,
@@ -457,14 +457,14 @@ export const CONFIGURABLE_GRAPH_SETTINGS = {
   BUTTON_HOVER_OPACITY: 0.8,
   /** Title bottom offset (px). */
   TITLE_BOTTOM_OFFSET: -5,
-  /** Default max data points (px). */
+  /** Default maximum samples retained on the graph (count). */
   DEFAULT_MAX_DATA_POINTS: 2000,
   /** Initial range min (control/model units). */
   INITIAL_RANGE_MIN: -10,
   /** Initial range max (control/model units). */
   INITIAL_RANGE_MAX: 10,
-  /** Opacity opacity (dimensionless). */
-  OPACITY_OPACITY: 1.0,
+  /** Default button-background opacity when not hovered (dimensionless). */
+  OPACITY: 1.0,
   /** Axis interaction width (px). */
   AXIS_INTERACTION_WIDTH: 60,
   /** Axis interaction height (px). */

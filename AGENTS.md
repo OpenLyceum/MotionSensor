@@ -19,6 +19,7 @@ Read both before changing model code.
 
 | File | Purpose |
 |---|---|
+| `src/MotionSensorConstants.ts` | Ranges, defaults, sampling, layout, graph and walker proportions |
 | `src/common/model/MotionSensorModel.ts` | The whole activity: recording state machine, fixed-rate sampling, derived quantities |
 | `src/common/model/Trace.ts` | The sample buffer + cached velocity / acceleration series |
 | `src/common/model/motionMath.ts` | Least-squares derivative + windowed differentiator (pure) |

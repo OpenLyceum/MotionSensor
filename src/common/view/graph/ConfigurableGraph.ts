@@ -339,7 +339,7 @@ export class ConfigurableGraph extends Node {
           buttonBackground.opacity = BUTTON_HOVER_OPACITY;
         },
         exit: () => {
-          buttonBackground.opacity = CONFIGURABLE_GRAPH_SETTINGS.OPACITY_OPACITY;
+          buttonBackground.opacity = CONFIGURABLE_GRAPH_SETTINGS.OPACITY;
         },
       });
 
