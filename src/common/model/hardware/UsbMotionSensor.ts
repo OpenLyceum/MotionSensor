@@ -111,6 +111,9 @@ export class UsbMotionSensor implements TMotionSensorDevice {
   private deviceIsSampling = false;
   /** True while the read loop should keep draining what the device pushes. */
   private draining = false;
+  /** Startup and shutdown are serialized because both contain asynchronous writes. */
+  private startPromise: Promise<void> | null = null;
+  private stopPromise: Promise<void> | null = null;
 
   private readonly onUnexpectedDisconnect: () => void;
   private readonly handleDisconnect: (event: USBConnectionEvent) => void;
@@ -137,6 +140,7 @@ export class UsbMotionSensor implements TMotionSensorDevice {
     this.handleDisconnect = (event: USBConnectionEvent) => {
       if (event.device === this.device) {
         this.device = null;
+        navigator.usb?.removeEventListener("disconnect", this.handleDisconnect);
         this.onUnexpectedDisconnect();
       }
     };
@@ -371,17 +375,34 @@ export class UsbMotionSensor implements TMotionSensorDevice {
     periodMilliseconds: number,
     onSample: (echoTimeMicroseconds: number) => void,
   ): Promise<void> {
+    if (this.stopPromise !== null) {
+      await this.stopPromise;
+    }
     if (this.deviceIsSampling) {
       return;
     }
-    await this.write(MOTION_SENSOR_SERVICE_ID, setSamplePeriodCommand(periodMilliseconds * 1000));
-    await this.write(PASCO_DEVICE_SERVICE_ID, startSamplingCommand(periodMilliseconds));
-    this.deviceIsSampling = true;
-    this.draining = true;
-    this.log("streaming started at", periodMilliseconds, "ms");
-    // Deliberately not awaited: the loop runs until stopStreaming, and it never
-    // rejects, so there is nothing for a caller to wait on or handle.
-    this.drainStream(onSample).catch(() => undefined);
+    if (this.startPromise !== null) {
+      return this.startPromise;
+    }
+    const start = (async () => {
+      await this.write(MOTION_SENSOR_SERVICE_ID, setSamplePeriodCommand(periodMilliseconds * 1000));
+      await this.write(PASCO_DEVICE_SERVICE_ID, startSamplingCommand(periodMilliseconds));
+      this.deviceIsSampling = true;
+      if (this.stopPromise === null) {
+        this.draining = true;
+        this.log("streaming started at", periodMilliseconds, "ms");
+        // The read loop runs until stopStreaming and never rejects.
+        this.drainStream(onSample).catch(() => undefined);
+      }
+    })();
+    this.startPromise = start;
+    try {
+      await start;
+    } finally {
+      if (this.startPromise === start) {
+        this.startPromise = null;
+      }
+    }
   }
 
   /**
@@ -391,16 +412,33 @@ export class UsbMotionSensor implements TMotionSensorDevice {
    */
   public async stopStreaming(): Promise<void> {
     this.draining = false;
-    if (!this.deviceIsSampling) {
-      return;
+    if (this.stopPromise !== null) {
+      return this.stopPromise;
     }
-    this.deviceIsSampling = false;
+    const stop = (async () => {
+      try {
+        await this.startPromise;
+      } catch {
+        // A failed start has no confirmed device sampler to stop.
+      }
+      this.draining = false;
+      if (!this.deviceIsSampling) {
+        return;
+      }
+      this.deviceIsSampling = false;
+      try {
+        await this.write(PASCO_DEVICE_SERVICE_ID, stopSamplingCommand());
+      } catch (error) {
+        this.log("stop command failed:", error);
+      }
+    })();
+    this.stopPromise = stop;
     try {
-      await this.write(PASCO_DEVICE_SERVICE_ID, stopSamplingCommand());
-    } catch (error) {
-      // Nothing useful to do: a device that will not hear the command is one we
-      // are disconnecting from, and it is out of ideas either way.
-      this.log("stop command failed:", error);
+      await stop;
+    } finally {
+      if (this.stopPromise === stop) {
+        this.stopPromise = null;
+      }
     }
   }
 
