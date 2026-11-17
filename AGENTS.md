@@ -26,8 +26,9 @@ Read both before changing model code.
 | `src/common/model/PositionSource.ts` | `TPositionSource` — the seam between the two screens |
 | `src/common/model/SensorPositionSource.ts` | The PASCO link: transport choice, poll / stream loop, never-rejecting connect |
 | `src/common/model/transportSupport.ts` | Whether this browser has Web Bluetooth / WebUSB at all |
-| `src/sensor/model/MotionSensorDevice.ts` | `TMotionSensorDevice` — the seam between the two transports |
-| `src/sensor/model/UsbMotionSensor.ts` | WebUSB sibling of `BluetoothMotionSensor`; same packets. Copied from MotionMatch |
+| `src/common/model/hardware/MotionSensorDevice.ts` | `TMotionSensorDevice` — the seam between the two transports |
+| `src/common/model/hardware/BluetoothMotionSensor.ts` | Web Bluetooth transport |
+| `src/common/model/hardware/UsbMotionSensor.ts` | WebUSB sibling of `BluetoothMotionSensor`; same packets. Shared with MotionMatch |
 | `src/common/view/MotionSensorScreenView.ts` | **One** ScreenView, used by both screens |
 | `src/common/view/graph/` | `ConfigurableGraph` and its data manager, controls panel and gesture handler |
 | `src/common/view/DataTableNode.ts` | The recording as two chosen columns, scrolling + CSV download |
@@ -128,8 +129,8 @@ cannot).
   arrives, and USB keeps it powered. `deviceIsSampling` (a stop is owed) is
   deliberately separate from `draining` (the read loop is alive) — never merge
   them.
-- **`src/sensor/model/` is a copy of MotionMatch's.** Port fixes both ways by
-  hand.
+- **`src/common/model/hardware/` is shared with MotionMatch.** Port fixes both
+  ways by hand.
 - **`connect()` never rejects.** Outcomes land on Properties. A dismissed picker
   throws `DeviceSelectionCancelled` internally and is not shown as an error.
 - **Only `startRecording()` starts the source sampling**, and t = 0 waits for
