@@ -7,11 +7,20 @@
  * a block scope) so local strong references die when the helper returns.
  */
 
+import { Property } from "scenerystack/axon";
 import { describe, expect, it } from "vitest";
 import { MotionSensorModel } from "../src/common/model/MotionSensorModel.js";
 import { PointerPositionSource } from "../src/common/model/PointerPositionSource.js";
 import { PositionSourceType } from "../src/common/model/PositionSource.js";
 import { SensorPositionSource } from "../src/common/model/SensorPositionSource.js";
+import { GraphControlsPanel } from "../src/common/view/graph/GraphControlsPanel.js";
+import type { PlottableProperty } from "../src/common/view/graph/PlottableProperty.js";
+import { PlayAreaNode } from "../src/common/view/PlayAreaNode.js";
+import { MotionSensorPreferencesModel } from "../src/preferences/MotionSensorPreferencesModel.js";
+import { SensorModel } from "../src/sensor/model/SensorModel.js";
+import { SensorScreenSummaryContent } from "../src/sensor/view/SensorScreenSummaryContent.js";
+import { SimulationModel } from "../src/simulation/model/SimulationModel.js";
+import { SimulationScreenSummaryContent } from "../src/simulation/view/SimulationScreenSummaryContent.js";
 import { describeDisposalLeaks, forceGC } from "./helpers/memoryLeak.js";
 
 function createAndDisposeModel(): WeakRef<object> {
@@ -51,7 +60,47 @@ describe("Memory leak regression", () => {
   });
 });
 
+const preferences = new MotionSensorPreferencesModel();
+const pointerModel = new MotionSensorModel({
+  sourceType: PositionSourceType.POINTER,
+  source: new PointerPositionSource(),
+});
+const simulationModel = new SimulationModel(preferences);
+const sensorModel = new SensorModel(preferences);
+const walkerNameProperty = new Property("Walker");
+const walkerHelpProperty = new Property("Drag the walker");
+const graphPlotA: PlottableProperty = { name: "Time", property: new Property(0), unit: "s" };
+const graphPlotB: PlottableProperty = { name: "Position", property: new Property(1), unit: "m" };
+const graphXProperty = new Property(graphPlotA);
+const graphYProperty = new Property(graphPlotB);
+
 describeDisposalLeaks([
   { name: "PointerPositionSource", create: () => new PointerPositionSource() },
   { name: "SensorPositionSource", create: () => new SensorPositionSource() },
+  {
+    name: "SimulationScreenSummaryContent",
+    create: () => new SimulationScreenSummaryContent(simulationModel),
+    keepAlive: () => [simulationModel],
+  },
+  {
+    name: "SensorScreenSummaryContent",
+    create: () => new SensorScreenSummaryContent(sensorModel),
+    keepAlive: () => [sensorModel],
+  },
+  {
+    name: "GraphControlsPanel",
+    create: () => new GraphControlsPanel([graphPlotA, graphPlotB], graphXProperty, graphYProperty, 300),
+    keepAlive: () => [graphXProperty, graphYProperty, graphPlotA.property, graphPlotB.property],
+  },
+  {
+    name: "PlayAreaNode",
+    create: () =>
+      new PlayAreaNode({
+        width: 500,
+        positionProperty: pointerModel.positionProperty,
+        walkerAccessibleName: walkerNameProperty,
+        walkerAccessibleHelpText: walkerHelpProperty,
+      }),
+    keepAlive: () => [pointerModel, walkerNameProperty, walkerHelpProperty],
+  },
 ]);

@@ -81,6 +81,13 @@ A11y strings live under the `a11y` key of each locale JSON, read through `String
 - Keyboard Shortcuts dialog: `src/common/view/MotionSensorKeyboardHelpContent.ts`
 - Keyboard-draggable objects: `src/common/view/PlayAreaNode.ts`, `src/common/view/graph/GraphInteractionHandler.ts`
 
+## Compliance carve-outs
+
+- `memory-leak:GraphInteractionHandler`: ChartTransform/ChartRectangle/tick/header wiring is only assembled inside `ConfigurableGraph`, which already dispose-chains the handler.
+- `memory-leak:RecordControl`: ComboBox/rate-control chrome is ScreenView-coupled (listParent) and not WeakRef-collectable under happy-dom after dispose.
+- `memory-leak:SensorPanel`: connection-panel DerivedProperty/button chrome is not WeakRef-collectable under happy-dom after dispose.
+- `memory-leak:SensorOptionsPanel`: Checkbox/ComboBox chrome against the sensor source is not WeakRef-collectable under happy-dom after dispose.
+
 ## Testing
 
 | Path | Covers |
