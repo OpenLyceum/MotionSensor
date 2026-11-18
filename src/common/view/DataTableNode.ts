@@ -280,37 +280,45 @@ export class DataTableNode extends MotionSensorPanel {
       URL.revokeObjectURL(url);
     };
 
+    // Disposed by hand: ButtonNode wraps its content, so disposing the button's subtree
+    // does not reach this Text.
+    const downloadLabel = new Text(strings.downloadStringProperty, {
+      font: BUTTON_FONT,
+      fill: LIGHT_SURFACE_TEXT_FILL,
+    });
     const downloadButton = new RectangularPushButton({
       ...FLAT_PANEL_PUSH_BUTTON_OPTIONS,
-      content: new Text(strings.downloadStringProperty, { font: BUTTON_FONT, fill: LIGHT_SURFACE_TEXT_FILL }),
+      content: downloadLabel,
       listener: downloadCsv,
       accessibleName: strings.downloadStringProperty,
       enabledProperty: hasDataProperty,
     });
 
-    super(
-      new VBox({
-        align: "left",
-        spacing: DATA_TABLE_NODE_SETTINGS.CONSTRUCTOR_SPACING,
-        children: [
-          new HBox({ spacing: COLUMN_GAP, children: [columnAComboBox, columnBComboBox] }),
-          new VBox({
-            align: "left",
-            spacing: DATA_TABLE_NODE_SETTINGS.ITEM_2_SPACING,
-            children: [headerRow, headerRule, body],
-          }),
-          new HBox({
-            spacing: DATA_TABLE_NODE_SETTINGS.ITEM_3_SPACING,
-            children: [scrollUpButton, scrollDownButton, footer],
-          }),
-          downloadButton,
-        ],
-      }),
-      {
-        xMargin: DATA_TABLE_NODE_SETTINGS.CONSTRUCTOR_X_MARGIN,
-        yMargin: DATA_TABLE_NODE_SETTINGS.CONSTRUCTOR_Y_MARGIN,
-      },
-    );
+    // Kept so dispose() can release every control: the buttons and footer Text link to
+    // sim-lifetime string and accessible-name Properties, and Panel.dispose() does not
+    // dispose its content.
+    const content = new VBox({
+      align: "left",
+      spacing: DATA_TABLE_NODE_SETTINGS.CONSTRUCTOR_SPACING,
+      children: [
+        new HBox({ spacing: COLUMN_GAP, children: [columnAComboBox, columnBComboBox] }),
+        new VBox({
+          align: "left",
+          spacing: DATA_TABLE_NODE_SETTINGS.ITEM_2_SPACING,
+          children: [headerRow, headerRule, body],
+        }),
+        new HBox({
+          spacing: DATA_TABLE_NODE_SETTINGS.ITEM_3_SPACING,
+          children: [scrollUpButton, scrollDownButton, footer],
+        }),
+        downloadButton,
+      ],
+    });
+
+    super(content, {
+      xMargin: DATA_TABLE_NODE_SETTINGS.CONSTRUCTOR_X_MARGIN,
+      yMargin: DATA_TABLE_NODE_SETTINGS.CONSTRUCTOR_Y_MARGIN,
+    });
 
     this.columnAComboBox = columnAComboBox;
     this.columnBComboBox = columnBComboBox;
@@ -431,9 +439,11 @@ export class DataTableNode extends MotionSensorPanel {
       for (const source of headerSources) {
         source.unlink(updateHeaders);
       }
+      // The controls first (including both combo boxes), while the Properties they
+      // listen to still exist.
+      content.disposeSubtree();
+      downloadLabel.dispose();
       for (const disposable of [
-        columnAComboBox,
-        columnBComboBox,
         rowsCounterProperty,
         canScrollUpProperty,
         canScrollDownProperty,

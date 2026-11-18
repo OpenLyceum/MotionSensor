@@ -674,6 +674,8 @@ export class ConfigurableGraph extends Node {
     this.interactionHandler.dispose();
     this.controlsPanel.dispose();
     this.headerBar.dispose();
+    // The control buttons link to sim-lifetime accessible-name Properties.
+    this.controlButtonsPanel.disposeSubtree();
     this.graphVisibleProperty.dispose();
     this.isDraggingProperty.dispose();
     this.isResizingProperty.dispose();
