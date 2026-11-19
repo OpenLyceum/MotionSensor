@@ -527,6 +527,8 @@ export const GRAPH_INTERACTION_HANDLER_SETTINGS = {
   MIN_WIDTH: 200,
   /** Min height (px). */
   MIN_HEIGHT: 150,
+  /** Smallest finger separation (px) used as a pinch-zoom divisor, so meeting fingers never divide by zero. */
+  MIN_PINCH_DISTANCE: 1,
 } as const;
 
 /** Settings for preferences/MotionSensorPreferencesNode.ts. */

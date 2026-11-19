@@ -312,7 +312,8 @@ export class GraphInteractionHandler {
             const currentDistance = point0.distance(point1);
 
             // Calculate zoom factor from distance ratio
-            const zoomFactor = initialDistance / currentDistance;
+            const zoomFactor =
+              initialDistance / Math.max(currentDistance, GRAPH_INTERACTION_HANDLER_SETTINGS.MIN_PINCH_DISTANCE);
 
             // Convert initial midpoint to model coordinates
             const initialModelCenter = this.chartTransform.viewToModelPosition(initialMidpoint);
@@ -433,7 +434,8 @@ export class GraphInteractionHandler {
             const currentYDistance = Math.abs(point0.y - point1.y);
 
             // Calculate zoom factor from Y-distance ratio
-            const zoomFactor = initialYDistance / currentYDistance;
+            const zoomFactor =
+              initialYDistance / Math.max(currentYDistance, GRAPH_INTERACTION_HANDLER_SETTINGS.MIN_PINCH_DISTANCE);
 
             // Convert initial midpoint Y to model coordinates
             const viewMidpoint = new Vector2(this.graphWidth / 2, initialYMidpoint);
@@ -623,7 +625,8 @@ export class GraphInteractionHandler {
             const currentXDistance = Math.abs(point0.x - point1.x);
 
             // Calculate zoom factor from X-distance ratio
-            const zoomFactor = initialXDistance / currentXDistance;
+            const zoomFactor =
+              initialXDistance / Math.max(currentXDistance, GRAPH_INTERACTION_HANDLER_SETTINGS.MIN_PINCH_DISTANCE);
 
             // Convert initial midpoint X to model coordinates
             const viewMidpoint = new Vector2(initialXMidpoint, this.graphHeight / 2);
