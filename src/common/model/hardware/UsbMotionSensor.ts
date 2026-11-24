@@ -597,6 +597,7 @@ export class UsbMotionSensor implements TMotionSensorDevice {
 
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
     const expired = new Promise<never>((_resolve, reject) => {
+      // biome-ignore lint/plugin/no-native-timer: async host/hardware delay (not sim step)
       timeoutId = setTimeout(
         () => reject(new Error(`Motion sensor sent nothing in ${READ_DEADLINE_MS} ms`)),
         READ_DEADLINE_MS,

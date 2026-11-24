@@ -364,6 +364,7 @@ export class SensorPositionSource implements TPositionSource {
     }
     const device = this.device;
     const timeoutMs = Math.max(STREAM_SILENCE_TIMEOUT_MS, STREAM_SILENCE_PERIODS * this.pollIntervalMs);
+    // biome-ignore lint/plugin/no-native-timer: async host/hardware delay (not sim step)
     this.streamWatchdogId = setTimeout(() => {
       this.streamWatchdogId = null;
       if (!(this.samplingRequested && this.isStreaming) || device !== this.device) {
@@ -394,6 +395,7 @@ export class SensorPositionSource implements TPositionSource {
     }
     const generation = ++this.pollingGeneration;
     this.poll(generation).catch(() => undefined);
+    // biome-ignore lint/plugin/no-native-timer: async host/hardware delay (not sim step)
     this.pollTimerId = setInterval(() => {
       this.poll(generation).catch(() => undefined);
     }, this.pollIntervalMs);

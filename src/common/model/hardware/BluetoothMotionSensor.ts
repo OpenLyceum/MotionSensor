@@ -162,6 +162,7 @@ export class BluetoothMotionSensor implements TMotionSensorDevice {
 
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
     const acknowledged = new Promise<boolean>((resolve, reject) => {
+      // biome-ignore lint/plugin/no-native-timer: async host/hardware delay (not sim step)
       timeoutId = setTimeout(() => {
         this.pendingAck = null;
         reject(new Error(`Timed out waiting for the motion sensor to accept a ${description}`));
@@ -201,6 +202,7 @@ export class BluetoothMotionSensor implements TMotionSensorDevice {
 
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
     const sample = new Promise<number>((resolve, reject) => {
+      // biome-ignore lint/plugin/no-native-timer: async host/hardware delay (not sim step)
       timeoutId = setTimeout(() => {
         this.pendingRead = null;
         reject(new Error("Timed out waiting for a motion-sensor sample"));

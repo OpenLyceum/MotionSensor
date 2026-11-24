@@ -15,7 +15,7 @@
  *  - Computed expressions (e.g. `2 * Math.PI`) may stay inline.
  */
 
-import { Range } from "scenerystack/dot";
+import { Range, roundSymmetric } from "scenerystack/dot";
 import MotionSensorNamespace from "./MotionSensorNamespace.js";
 
 // ── Layout / chrome (screen pixels) ───────────────────────────────────────────
@@ -102,7 +102,7 @@ const MINIMUM_WINDOW_SAMPLES = 3;
 
 /** Samples spanning {@link DERIVATIVE_WINDOW_S} at `sampleRateHz`, never below {@link MINIMUM_WINDOW_SAMPLES}. */
 export function windowSamplesForRate(sampleRateHz: number): number {
-  return Math.max(MINIMUM_WINDOW_SAMPLES, Math.round(DERIVATIVE_WINDOW_S * sampleRateHz));
+  return Math.max(MINIMUM_WINDOW_SAMPLES, roundSymmetric(DERIVATIVE_WINDOW_S * sampleRateHz));
 }
 
 // ── The activity area (SI units) ──────────────────────────────────────────────

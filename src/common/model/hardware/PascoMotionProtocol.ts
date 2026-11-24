@@ -1,3 +1,5 @@
+import { roundSymmetric } from "scenerystack/dot";
+
 /** Dependency-free PASCO wire protocol, scoped to the PS-3219 motion sensor. */
 
 const UUID_PREFIX = "4a5c000";
@@ -121,7 +123,7 @@ export type AcknowledgedCommandValue = (typeof AcknowledgedCommand)[keyof typeof
 
 /** Asks the sensor to reconfigure its periodic sampler. Trailing bytes are reserved. */
 export function setSamplePeriodCommand(periodMicroseconds: number): ArrayBuffer {
-  const period = Math.round(periodMicroseconds);
+  const period = roundSymmetric(periodMicroseconds);
   return toCommandBuffer([
     SET_SAMPLE_PERIOD,
     period & 0xff,
@@ -146,7 +148,7 @@ export function decodeCommandAck(data: Uint8Array, command: AcknowledgedCommandV
 
 /** Starts the device sampling on its own clock, one channel, period in ms. */
 export function startSamplingCommand(periodMilliseconds: number): ArrayBuffer {
-  const period = Math.round(periodMilliseconds) & 0x7ff;
+  const period = roundSymmetric(periodMilliseconds) & 0x7ff;
   return toCommandBuffer([START_SAMPLING, period & 0xff, (period >>> 8) & 0xff]);
 }
 
