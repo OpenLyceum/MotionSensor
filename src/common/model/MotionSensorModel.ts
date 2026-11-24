@@ -1,3 +1,4 @@
+import { roundSymmetric } from "scenerystack/dot";
 import { MOTION_SENSOR_MODEL_SETTINGS } from "../../MotionSensorConstants.js";
 /**
  * MotionSensorModel.ts
@@ -129,7 +130,7 @@ export class MotionSensorModel implements TModel {
   private samplePeriod = 1 / DEFAULT_SAMPLE_RATE_HZ;
 
   /** Samples the current recording may hold before it stops itself. */
-  private maximumSamples = Math.round(MAX_RECORD_DURATION_S * DEFAULT_SAMPLE_RATE_HZ);
+  private maximumSamples = roundSymmetric(MAX_RECORD_DURATION_S * DEFAULT_SAMPLE_RATE_HZ);
 
   /** How many samples the current recording holds. Integer, never derived from a float. */
   private sampleIndex = 0;
@@ -348,7 +349,7 @@ export class MotionSensorModel implements TModel {
     this.awaitingProperty.value = false;
     const sampleRate = this.sampleRateProperty.value;
     this.samplePeriod = 1 / sampleRate;
-    this.maximumSamples = Math.round(MAX_RECORD_DURATION_S * sampleRate);
+    this.maximumSamples = roundSymmetric(MAX_RECORD_DURATION_S * sampleRate);
     this.trace.clear();
     this.trace.setSampleRate(sampleRate);
     this.timeProperty.value = 0;

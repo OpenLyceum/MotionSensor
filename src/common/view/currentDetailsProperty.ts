@@ -12,6 +12,7 @@
 
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { DerivedProperty, PatternStringProperty } from "scenerystack/axon";
+import { roundSymmetric } from "scenerystack/dot";
 import { type ScreenA11yStrings, StringManager } from "../../i18n/StringManager.js";
 import type { MotionSensorModel } from "../model/MotionSensorModel.js";
 import { PositionSourceType } from "../model/PositionSource.js";
@@ -25,7 +26,7 @@ export type CurrentDetails = {
 export function createCurrentDetailsProperty(model: MotionSensorModel, a11y: ScreenA11yStrings): CurrentDetails {
   // Spoken time is rounded to whole seconds: a screen reader announcing a tenth
   // of a second twenty times a second is unusable.
-  const wholeSecondsProperty = new DerivedProperty([model.timeProperty], (time) => Math.round(time));
+  const wholeSecondsProperty = new DerivedProperty([model.timeProperty], (time) => roundSymmetric(time));
 
   const recordingProperty = new PatternStringProperty(a11y.currentDetails.recordingStringProperty, {
     time: wholeSecondsProperty,
